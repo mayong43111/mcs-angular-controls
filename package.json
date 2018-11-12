@@ -1,0 +1,20 @@
+{
+  "name": "mcs-angular-controls",
+  "version": "0.0.1",
+  "description": "",
+  "author": "Yong Ma",
+  "private": true,
+  "devDependencies": {
+    "@types/angular": "^1.6.51",
+    "angular": "^1.2.32",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-html2js": "^0.4.2",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-rename": "^1.4.0",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^5.0.0-alpha.3",
+    "gulp-uglify": "^3.0.1",
+    "typescript": "^3.1.6"
+  }
+}
