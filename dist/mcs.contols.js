@@ -93,7 +93,9 @@ var module = angular.module('mcs.contols', [
     'mcs.contols.select',
     'mcs.contols.input.checkbox',
     'mcs.contols.checkboxlist',
-    'mcs.contols.radiolist'
+    'mcs.contols.radiolist',
+    'mcs.contols.toastr',
+    'mcs.contols.tree'
 ]);
 
 "use strict";
@@ -294,5 +296,258 @@ var $SelectControlDirective = /** @class */ (function () {
 }());
 var module = angular.module('mcs.contols.select', ['mcs.controls.templates']);
 module.directive('mcsSelect', $SelectControlDirective.factory());
+
+"use strict";
+var ToastrLevel;
+(function (ToastrLevel) {
+    ToastrLevel[ToastrLevel["Info"] = 0] = "Info";
+    ToastrLevel[ToastrLevel["Success"] = 1] = "Success";
+    ToastrLevel[ToastrLevel["Warning"] = 2] = "Warning";
+    ToastrLevel[ToastrLevel["Error"] = 3] = "Error";
+})(ToastrLevel || (ToastrLevel = {}));
+var $ToastrService = /** @class */ (function () {
+    function $ToastrService($templateCache, $compile, $rootScope) {
+        this.interval = 10;
+        var template = $templateCache.get('templates/mcs.toast.html');
+        if (!template)
+            throw 'must need templates/mcs.toast.html';
+        this.toastrScope = $rootScope.$new();
+        this.toastrScope.messages = [];
+        this.toastrScope.setRemainingTimeZero = function (message) {
+            message.remainingTime = 0;
+        };
+        var clonedElement = $compile(angular.element(template))(this.toastrScope);
+        angular.element(document).find('body').append(clonedElement);
+    }
+    $ToastrService.prototype.send = function (content, title, level, timeOut) {
+        var _this = this;
+        if (!content)
+            return;
+        level = level || ToastrLevel.Info;
+        timeOut = timeOut || 5000;
+        var newToastrMessage = {
+            title: title || this.getDefautTitle(level),
+            content: content,
+            remaining: this.getRemaining(timeOut, timeOut),
+            remainingTime: timeOut,
+            timeOut: timeOut,
+            className: this.getClassName(level),
+        };
+        this.toastrScope.messages.push(newToastrMessage);
+        if (!this.intervalID)
+            this.intervalID = window.setInterval(function () { return _this.innerTimerHandler(); }, this.interval);
+    };
+    $ToastrService.prototype.innerTimerHandler = function () {
+        var messages = this.toastrScope.messages;
+        for (var i = 0; i < messages.length; i++) {
+            var message = messages[i];
+            message.remainingTime -= this.interval;
+            message.remaining = this.getRemaining(message.remainingTime, message.timeOut);
+            if (message.remainingTime <= 0) {
+                messages.splice(i, 1);
+                return this.innerTimerHandler();
+            }
+        }
+        if (messages.length == 0) {
+            window.clearInterval(this.intervalID);
+            this.intervalID = undefined;
+        }
+        this.toastrScope.$apply();
+    };
+    $ToastrService.prototype.getRemaining = function (remainingTime, timeOut) {
+        if (remainingTime < 0)
+            return '0';
+        return ((remainingTime / timeOut) * 100) + '%';
+    };
+    $ToastrService.prototype.getDefautTitle = function (level) {
+        switch (level) {
+            case ToastrLevel.Success:
+                return 'Success';
+            case ToastrLevel.Warning:
+                return 'Warning';
+            case ToastrLevel.Error:
+                return 'Error';
+            default:
+                return 'Info';
+        }
+    };
+    $ToastrService.prototype.getClassName = function (level) {
+        switch (level) {
+            case ToastrLevel.Success:
+                return 'success';
+            case ToastrLevel.Warning:
+                return 'warning';
+            case ToastrLevel.Error:
+                return 'error';
+            default:
+                return 'info';
+        }
+    };
+    $ToastrService.$inject = ['$templateCache', '$compile', '$rootScope'];
+    return $ToastrService;
+}());
+var modMain = angular.module('mcs.contols.toastr', ['mcs.controls.templates']);
+modMain.service('toastrService', $ToastrService);
+
+"use strict";
+//树节点的类型
+var TreeNodeType;
+(function (TreeNodeType) {
+    TreeNodeType[TreeNodeType["folder"] = 0] = "folder";
+    TreeNodeType[TreeNodeType["file"] = 1] = "file";
+    TreeNodeType[TreeNodeType["user"] = 2] = "user";
+})(TreeNodeType || (TreeNodeType = {}));
+//树控件的控制器
+var $TreeControlController = /** @class */ (function () {
+    function $TreeControlController($scope, $q, $templateCache, $compile, $controller) {
+        var _this = this;
+        this.$scope = $scope;
+        this.$q = $q;
+        this.$templateCache = $templateCache;
+        this.$compile = $compile;
+        this.$controller = $controller;
+        if (!$scope.optionsName)
+            throw 'must need options.';
+        $scope.options = $scope.$parent.$eval($scope.optionsName);
+        if (!$scope.options)
+            throw 'must need options.';
+        this.options = $scope.options;
+        this.loadRootNode().then(function (data) {
+            _this.renderTreeNode($scope.rootContainer, $scope, data);
+        });
+    }
+    $TreeControlController.prototype.renderTreeNode = function (container, $parentScope, data) {
+        var template = angular.element(this.$templateCache.get('templates/mcs.tree.node.html'));
+        var newScope = $parentScope.$new();
+        newScope.rootController = this;
+        newScope.item = data;
+        newScope.nodeContainer = template.find('.node-container');
+        this.$controller($TreeNodeController, { $scope: newScope });
+        var clonedElement = this.$compile(template)(newScope);
+        container.append(clonedElement);
+    };
+    //加载根节点
+    $TreeControlController.prototype.loadRootNode = function () {
+        var defer = this.$q.defer();
+        if (this.$scope.data) {
+            defer.resolve(this.convertViewModel(this.options.data, 0));
+        }
+        else if (this.options.data) {
+            this.options.data.open = this.options.data.children != null; //根节点需要展开
+            this.$scope.data = this.convertViewModel(this.options.data, 0);
+            defer.resolve(this.$scope.data);
+        }
+        return defer.promise;
+    };
+    $TreeControlController.prototype.loadChildrenTreeNode = function (treeNode) {
+        var _this = this;
+        var defer = this.$q.defer();
+        if (treeNode.children) {
+            defer.resolve(treeNode.children);
+        }
+        else if (this.options.adapter && this.options.adapter.loadChildren) {
+            var loadChildren = this.options.adapter.loadChildren(treeNode.source.id);
+            if (this.isIPromise(loadChildren)) {
+                loadChildren.then(function (data) {
+                    data = data || [];
+                    var children = _this.convertViewModels(data, treeNode.level);
+                    treeNode.children = children;
+                    treeNode.loaded = true;
+                    defer.resolve(treeNode.children);
+                });
+            }
+            else {
+                var children = this.convertViewModels(loadChildren, treeNode.level);
+                treeNode.children = children;
+                treeNode.loaded = true;
+                defer.resolve(treeNode.children);
+            }
+        }
+        return defer.promise;
+    };
+    $TreeControlController.prototype.isIPromise = function (source) {
+        return source && typeof (source.then) != 'undefined';
+    };
+    $TreeControlController.prototype.convertViewModels = function (treeNodes, level) {
+        var result = [];
+        for (var index = 0; index < treeNodes.length; index++) {
+            var element = treeNodes[index];
+            result.push(this.convertViewModel(element, level));
+        }
+        return result;
+    };
+    //把数据源转换为视图模型
+    $TreeControlController.prototype.convertViewModel = function (treeNode, level) {
+        level++;
+        var result = {
+            level: level,
+            open: treeNode.open || false,
+            loaded: false,
+            type: treeNode.type || TreeNodeType.folder,
+            source: treeNode
+        };
+        if (treeNode.children && treeNode.children.constructor == Array) {
+            result.children = [];
+            result.loaded = true;
+            for (var index = 0; index < treeNode.children.length; index++) {
+                var element = treeNode.children[index];
+                result.children.push(this.convertViewModel(element, level));
+            }
+        }
+        return result;
+    };
+    $TreeControlController.$inject = ['$scope', '$q', '$templateCache', '$compile', '$controller'];
+    return $TreeControlController;
+}());
+//树节点的控制器
+var $TreeNodeController = /** @class */ (function () {
+    function $TreeNodeController($scope) {
+        var _this = this;
+        this.$scope = $scope;
+        $scope.expand = function () {
+            $scope.item.open = !$scope.item.open;
+            if (!$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
+                _this.internalRenderChildren($scope);
+            }
+        };
+        if ($scope.item.open && $scope.item.type == TreeNodeType.folder) {
+            this.internalRenderChildren($scope);
+        }
+    }
+    $TreeNodeController.prototype.internalRenderChildren = function ($scope) {
+        $scope.rootController.loadChildrenTreeNode($scope.item).then(function (data) {
+            for (var index = 0; index < data.length; index++) {
+                var element = data[index];
+                $scope.rootController.renderTreeNode($scope.nodeContainer, $scope, element);
+            }
+        });
+    };
+    $TreeNodeController.$inject = ['$scope'];
+    return $TreeNodeController;
+}());
+//Directive 的定义
+var $TreeControlDirective = /** @class */ (function () {
+    function $TreeControlDirective() {
+        this.templateUrl = 'templates/mcs.tree.html';
+        this.restrict = 'A';
+        this.scope = {
+            optionsName: '@mcsTree',
+            bindingValue: '=',
+            readonly: '=?mcsReadonly'
+        };
+        this.controller = $TreeControlController;
+        this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+            scope.rootContainer = instanceElement.find('.ztree');
+        };
+    }
+    $TreeControlDirective.factory = function () {
+        var directive = function () { return new $TreeControlDirective(); };
+        //directive.$inject = [];
+        return directive;
+    };
+    return $TreeControlDirective;
+}());
+var module = angular.module('mcs.contols.tree', ['mcs.controls.templates']);
+module.directive('mcsTree', $TreeControlDirective.factory());
 
 //# sourceMappingURL=mcs.contols.js.map

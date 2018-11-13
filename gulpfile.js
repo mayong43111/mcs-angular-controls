@@ -6,6 +6,8 @@ var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
 var htmlmin = require('gulp-htmlmin');
+var cleanCSS = require('gulp-clean-css');
+var copy = require('gulp-copy');
 
 gulp.task('html2js', function () {
 
@@ -34,7 +36,14 @@ gulp.task('ts-build', function () {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('compress', ['ts-build', 'html2js'], function () {
+gulp.task('concat-css', function () {
+
+    return gulp.src('src/styles/*.css')
+        .pipe(concat('mcs.controls.css'))
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task('compress-js', ['ts-build', 'html2js'], function () {
 
     gulp.src(['dist/*.js', '!dist/*.min.js'])
         .pipe(uglify())
@@ -42,6 +51,23 @@ gulp.task('compress', ['ts-build', 'html2js'], function () {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['compress'], function () {
+gulp.task('compress-css', ['concat-css'], function () {
+
+    gulp.src(['dist/*.css', '!dist/*.min.css'])
+        .pipe(sourcemaps.init())
+        .pipe(cleanCSS())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(sourcemaps.write('.', { includeContent: false }))
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task('img-copy', function () {
+
+    gulp
+        .src('src/img/**/*')
+        .pipe(copy('dist/img', { prefix: 2 }));
+});
+
+gulp.task('default', ['compress-js', 'compress-css', 'img-copy'], function () {
 
 });

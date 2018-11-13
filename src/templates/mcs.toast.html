@@ -1,0 +1,8 @@
+<div id="toast-container" class="toast-top-right">
+    <div class="toast toast-{{message.className}}" ng-repeat="message in messages">
+        <div class="toast-progress" ng-style="{ width: message.remaining }"></div>
+        <button type="button" class="toast-close-button" ng-click="setRemainingTimeZero(message)">×</button>
+        <div class="toast-title">{{message.title}}</div>
+        <div class="toast-message">{{message.content}}</div>
+    </div>
+</div>

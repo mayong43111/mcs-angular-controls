@@ -1,0 +1,12 @@
+<li class="level{{item.level}}">
+
+    <span class="button level{{item.level}}" ng-click="expand()" ng-class="{ 'roots_open': item.open, 'roots_close': !item.open }"></span>
+
+    <span class="button level{{item.level}}" ng-class="{ 'ico_open': item.open, 'ico_close': !item.open }"></span>
+
+    <a class="level{{item.level}}">
+        <span>{{item.source.name}}</span>
+    </a>
+    <ul class="node-container level{{item.level}}" ng-show="item.open && item.children && item.children.length > 0">
+    </ul>
+</li>

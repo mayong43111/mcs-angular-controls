@@ -14,5 +14,11 @@ $templateCache.put("templates/mcs.input.text.html","<span><input type=\"text\" n
 $templateCache.put("templates/mcs.radio.list.html","<div><label ng-repeat=\"option in internalOptions\"><input type=\"radio\" ng-model=\"$parent.bindingValue\" ng-value=\"option.value\" ng-disabled=\"readonly\">{{option.text}}</label></div>")
 
 $templateCache.put("templates/mcs.select.html","<span><select class=\"form-control\" ng-if=\"!readonly\" ng-model=\"$parent.bindingValue\" ng-options=\"option.value as option.text for option in $parent.internalOptions\"></select> <span ng-if=\"readonly\">{{bindingText || bindingValue}}</span></span>")
+
+$templateCache.put("templates/mcs.toast.html","<div id=\"toast-container\" class=\"toast-top-right\"><div class=\"toast toast-{{message.className}}\" ng-repeat=\"message in messages\"><div class=\"toast-progress\" ng-style=\"{ width: message.remaining }\"></div><button type=\"button\" class=\"toast-close-button\" ng-click=\"setRemainingTimeZero(message)\">×</button><div class=\"toast-title\">{{message.title}}</div><div class=\"toast-message\">{{message.content}}</div></div></div>")
+
+$templateCache.put("templates/mcs.tree.html","<ul class=\"ztree\" style=\"background-color: #f8fafb;\"></ul>")
+
+$templateCache.put("templates/mcs.tree.node.html","<li class=\"level{{item.level}}\"><span class=\"button level{{item.level}}\" ng-click=\"expand()\" ng-class=\"{ 'roots_open': item.open, 'roots_close': !item.open }\"></span> <span class=\"button level{{item.level}}\" ng-class=\"{ 'ico_open': item.open, 'ico_close': !item.open }\"></span> <a class=\"level{{item.level}}\"><span>{{item.source.name}}</span></a><ul class=\"node-container level{{item.level}}\" ng-show=\"item.open && item.children && item.children.length > 0\"></ul></li>")
 }]);
 })();

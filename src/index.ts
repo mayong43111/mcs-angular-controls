@@ -4,5 +4,7 @@ var module = angular.module('mcs.contols', [
     'mcs.contols.select',
     'mcs.contols.input.checkbox',
     'mcs.contols.checkboxlist',
-    'mcs.contols.radiolist'
+    'mcs.contols.radiolist',
+    'mcs.contols.toastr',
+    'mcs.contols.tree'
 ])
