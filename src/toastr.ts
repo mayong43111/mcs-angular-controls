@@ -1,136 +1,139 @@
-interface ToastrMessage {
+namespace mcscontrols {
 
-    className: string;
-    remaining: string;
-    remainingTime: number;
-    timeOut: number;
-    title: string;
-    content: string;
-}
+    interface ToastrMessage {
 
-interface IToastrScope extends ng.IScope {
-    messages: Array<ToastrMessage>;
-    setRemainingTimeZero: (message: ToastrMessage) => void;
-}
-
-enum ToastrLevel {
-    Info = 0,
-    Success = 1,
-    Warning = 2,
-    Error = 3
-}
-
-class $ToastrService {
-
-    private toastrScope: IToastrScope;
-    private intervalID?: number;
-    private interval = 10;
-
-    public static $inject: Array<string> = ['$templateCache', '$compile', '$rootScope'];
-    constructor(
-        $templateCache: ng.ITemplateCacheService,
-        $compile: ng.ICompileService,
-        $rootScope: ng.IScope
-    ) {
-
-        var template = $templateCache.get<String>('templates/mcs.toast.html');
-
-        if (!template) throw 'must need templates/mcs.toast.html'
-
-        this.toastrScope = $rootScope.$new() as IToastrScope;
-
-        this.toastrScope.messages = [];
-        this.toastrScope.setRemainingTimeZero = function (message: ToastrMessage) {
-            message.remainingTime = 0;
-        };
-
-        var clonedElement = $compile(angular.element(<string>template))(this.toastrScope);
-
-        angular.element(document).find('body').append(clonedElement);
+        className: string;
+        remaining: string;
+        remainingTime: number;
+        timeOut: number;
+        title: string;
+        content: string;
     }
 
-    send(content: string, title?: string, level?: number, timeOut?: number) {
+    interface IToastrScope extends ng.IScope {
+        messages: Array<ToastrMessage>;
+        setRemainingTimeZero: (message: ToastrMessage) => void;
+    }
 
-        if (!content) return;
+    enum ToastrLevel {
+        Info = 0,
+        Success = 1,
+        Warning = 2,
+        Error = 3
+    }
 
-        level = level || ToastrLevel.Info;
-        timeOut = timeOut || 5000
+    class $ToastrService {
 
-        var newToastrMessage: ToastrMessage = {
+        private toastrScope: IToastrScope;
+        private intervalID?: number;
+        private interval = 10;
 
-            title: title || this.getDefautTitle(level),
-            content: content,
-            remaining: this.getRemaining(timeOut, timeOut),
-            remainingTime: timeOut,
-            timeOut: timeOut,
-            className: this.getClassName(level),
+        public static $inject: Array<string> = ['$templateCache', '$compile', '$rootScope'];
+        constructor(
+            $templateCache: ng.ITemplateCacheService,
+            $compile: ng.ICompileService,
+            $rootScope: ng.IScope
+        ) {
+
+            var template = $templateCache.get<String>('templates/mcs.toast.html');
+
+            if (!template) throw 'must need templates/mcs.toast.html'
+
+            this.toastrScope = $rootScope.$new() as IToastrScope;
+
+            this.toastrScope.messages = [];
+            this.toastrScope.setRemainingTimeZero = function (message: ToastrMessage) {
+                message.remainingTime = 0;
+            };
+
+            var clonedElement = $compile(angular.element(<string>template))(this.toastrScope);
+
+            angular.element(document).find('body').append(clonedElement);
         }
 
-        this.toastrScope.messages.push(newToastrMessage);
-        if (!this.intervalID) this.intervalID = window.setInterval(() => this.innerTimerHandler(), this.interval);
-    }
+        send(content: string, title?: string, level?: number, timeOut?: number) {
 
-    private innerTimerHandler(): void {
+            if (!content) return;
 
-        var messages = this.toastrScope.messages;
+            level = level || ToastrLevel.Info;
+            timeOut = timeOut || 5000
 
-        for (var i = 0; i < messages.length; i++) {
+            var newToastrMessage: ToastrMessage = {
 
-            var message = messages[i];
-            message.remainingTime -= this.interval;
-            message.remaining = this.getRemaining(message.remainingTime, message.timeOut);
+                title: title || this.getDefautTitle(level),
+                content: content,
+                remaining: this.getRemaining(timeOut, timeOut),
+                remainingTime: timeOut,
+                timeOut: timeOut,
+                className: this.getClassName(level),
+            }
 
-            if (message.remainingTime <= 0) {
+            this.toastrScope.messages.push(newToastrMessage);
+            if (!this.intervalID) this.intervalID = window.setInterval(() => this.innerTimerHandler(), this.interval);
+        }
 
-                messages.splice(i, 1);
-                return this.innerTimerHandler();
+        private innerTimerHandler(): void {
+
+            var messages = this.toastrScope.messages;
+
+            for (var i = 0; i < messages.length; i++) {
+
+                var message = messages[i];
+                message.remainingTime -= this.interval;
+                message.remaining = this.getRemaining(message.remainingTime, message.timeOut);
+
+                if (message.remainingTime <= 0) {
+
+                    messages.splice(i, 1);
+                    return this.innerTimerHandler();
+                }
+            }
+
+            if (messages.length == 0) {
+                window.clearInterval(this.intervalID);
+                this.intervalID = undefined;
+            }
+
+            this.toastrScope.$apply();
+        }
+
+        private getRemaining(remainingTime: number, timeOut: number): string {
+
+            if (remainingTime < 0) return '0';
+            return ((remainingTime / timeOut) * 100) + '%';
+        }
+
+        private getDefautTitle(level: number): string {
+
+            switch (level) {
+
+                case ToastrLevel.Success:
+                    return 'Success';
+                case ToastrLevel.Warning:
+                    return 'Warning';
+                case ToastrLevel.Error:
+                    return 'Error';
+                default:
+                    return 'Info';
             }
         }
 
-        if (messages.length == 0) {
-            window.clearInterval(this.intervalID);
-            this.intervalID = undefined;
-        }
+        private getClassName(level: number): string {
 
-        this.toastrScope.$apply();
-    }
+            switch (level) {
 
-    private getRemaining(remainingTime: number, timeOut: number): string {
-
-        if (remainingTime < 0) return '0';
-        return ((remainingTime / timeOut) * 100) + '%';
-    }
-
-    private getDefautTitle(level: number): string {
-
-        switch (level) {
-
-            case ToastrLevel.Success:
-                return 'Success';
-            case ToastrLevel.Warning:
-                return 'Warning';
-            case ToastrLevel.Error:
-                return 'Error';
-            default:
-                return 'Info';
+                case ToastrLevel.Success:
+                    return 'success';
+                case ToastrLevel.Warning:
+                    return 'warning';
+                case ToastrLevel.Error:
+                    return 'error';
+                default:
+                    return 'info';
+            }
         }
     }
 
-    private getClassName(level: number): string {
-
-        switch (level) {
-
-            case ToastrLevel.Success:
-                return 'success';
-            case ToastrLevel.Warning:
-                return 'warning';
-            case ToastrLevel.Error:
-                return 'error';
-            default:
-                return 'info';
-        }
-    }
+    const toastr = angular.module('mcs.contols.toastr', ['mcs.controls.templates']);
+    toastr.service('toastrService', $ToastrService);
 }
-
-const modMain = angular.module('mcs.contols.toastr', ['mcs.controls.templates']);
-modMain.service('toastrService', $ToastrService);

@@ -1,274 +1,387 @@
-//树控件的配置
-interface TreeControlOptions {
-    adapter?: TreeControlAdapterOptions;
-    data: TreeNode;
-}
+namespace mcscontrols {
 
-//树控件的配置中适配器的设定
-interface TreeControlAdapterOptions {
-    loadChildren?: ((parentID: string) => ng.IPromise<Array<TreeNode>>) | ((parentID: string) => Array<TreeNode>) | undefined;
-}
-
-//树节点的类型
-enum TreeNodeType {
-    folder = 0,
-    file = 1,
-    user = 2
-}
-
-//树节点数据源的定义
-interface TreeNode {
-    id: string;
-    name: string;
-    parentID: string;
-    fullPath: string;
-    data: any;
-    open?: boolean;
-    type?: TreeNodeType;
-    children?: Array<TreeNode>;
-}
-
-//树节点视图模型的定义
-interface TreeNodeViewModel {
-    level: number;
-    type: TreeNodeType;
-    open: boolean;
-    loaded: boolean;
-    source: TreeNode;
-    children?: Array<TreeNodeViewModel>;
-}
-
-//树控件Scope的定义
-interface ITreeControlScope extends ng.IScope {
-    optionsName: string;
-    options: TreeControlOptions;
-    data: TreeNodeViewModel;
-    rootContainer: JQLite;
-}
-
-//树控件的控制器
-class $TreeControlController {
-
-    private options: TreeControlOptions;
-
-    static $inject: Array<string> = ['$scope', '$q', '$templateCache', '$compile', '$controller'];
-    constructor(
-        private $scope: ITreeControlScope,
-        private $q: ng.IQService,
-        private $templateCache: ng.ITemplateCacheService,
-        private $compile: ng.ICompileService,
-        private $controller: ng.IControllerService,
-    ) {
-
-        if (!$scope.optionsName) throw 'must need options.'
-        $scope.options = $scope.$parent.$eval($scope.optionsName);
-        if (!$scope.options) throw 'must need options.'
-
-        this.options = $scope.options;
-
-        this.loadRootNode().then(data => {
-
-            this.renderTreeNode($scope.rootContainer, $scope, data);
-        })
+    //树控件的配置
+    interface TreeControlOptions {
+        adapter?: TreeControlAdapterOptions;
+        data: TreeNode;
+        async: TreeControlAsyncOptions;
+        edit: TreeControlEditOptions;
+        callback: TreeControlcallBackOptions;
     }
 
-    public renderTreeNode(container: JQLite, $parentScope: ng.IScope, data: TreeNodeViewModel): void {
-
-        var template = angular.element(this.$templateCache.get('templates/mcs.tree.node.html') as string);
-
-        var newScope = $parentScope.$new() as ITreeNodeControlScope;
-        newScope.rootController = this;
-        newScope.item = data;
-        newScope.nodeContainer = template.find('.node-container');
-
-        this.$controller($TreeNodeController, { $scope: newScope });
-        var clonedElement = this.$compile(template)(newScope);
-
-        container.append(clonedElement);
+    interface TreeControlcallBackOptions {
+        onClick?: (treeNode: TreeNode, context: any) => void;
     }
 
-    //加载根节点
-    public loadRootNode(): ng.IPromise<TreeNodeViewModel> {
-
-        var defer = this.$q.defer<TreeNodeViewModel>();
-
-        if (this.$scope.data) {
-            defer.resolve(this.convertViewModel(this.options.data, 0));
-        }
-        else if (this.options.data) {
-
-            this.options.data.open = this.options.data.children != null; //根节点需要展开
-            this.$scope.data = this.convertViewModel(this.options.data, 0);
-
-            defer.resolve(this.$scope.data);
-        }
-
-        return defer.promise;
+    //树控件的配置中编辑的设定
+    interface TreeControlEditOptions {
+        enable: boolean;
+        allowAdd: boolean;
+        allowDel: boolean;
+        allowEdit: boolean;
     }
 
-    public loadChildrenTreeNode(treeNode: TreeNodeViewModel): ng.IPromise<Array<TreeNodeViewModel>> {
+    //树控件的配置中适配器的设定
+    interface TreeControlAsyncOptions {
+        url: string;
+        params: any;
+    }
 
-        var defer = this.$q.defer<Array<TreeNodeViewModel>>();
+    //树控件的配置中适配器的设定
+    interface TreeControlAdapterOptions {
+        loadRootNode?: ((parentID: string) => ng.IPromise<TreeNode>) | ((parentID: string) => TreeNode);
+        loadChildren?: ((parentID: string) => ng.IPromise<Array<TreeNode>>) | ((parentID: string) => Array<TreeNode>);
+    }
 
-        if (treeNode.children) {
-            defer.resolve(treeNode.children);
+    //树节点的类型
+    enum TreeNodeType {
+        folder = 0,
+        file = 1,
+        user = 2
+    }
+
+    //树节点数据源的定义
+    interface TreeNode {
+        id: string;
+        name: string;
+        parentID: string;
+        fullPath: string;
+        data: any;
+        open?: boolean;
+        type?: TreeNodeType;
+        allowAdd?: boolean;
+        allowDel?: boolean;
+        allowEdit?: boolean;
+        children?: Array<TreeNode>;
+    }
+
+    //树节点视图模型的定义
+    interface TreeNodeViewModel {
+        level: number;
+        type: TreeNodeType;
+        open: boolean;
+        loaded: boolean;
+        focus: boolean;
+        source: TreeNode;
+        allowAdd: boolean;
+        allowDel: boolean;
+        allowEdit: boolean;
+        children?: Array<TreeNodeViewModel>;
+    }
+
+    //树控件Scope的定义
+    interface ITreeControlScope extends ng.IScope {
+        optionsName: string;
+        data?: TreeNodeViewModel;
+        rootContainer: JQLite;
+        bindingValue?: Array<TreeNode> | TreeNode;
+    }
+
+    //树控件的控制器
+    class $TreeControlController {
+
+        private _options: TreeControlOptions;
+        private _focusNode?: TreeNodeViewModel;
+
+        static $inject: Array<string> = ['$scope', '$q', '$templateCache', '$compile', '$controller', '$http', 'toastrService'];
+        constructor(
+            private $scope: ITreeControlScope,
+            private $q: ng.IQService,
+            private $templateCache: ng.ITemplateCacheService,
+            private $compile: ng.ICompileService,
+            private $controller: ng.IControllerService,
+            private $http: ng.IHttpService,
+            private toastrService: any,
+        ) {
+
+            if (!$scope.optionsName) throw 'must need options.'
+            var options = $scope.$parent.$eval($scope.optionsName);
+            if (!options) throw 'must need options.'
+
+            this._options = angular.copy(options);
+            this.initializeOptions(this._options);
+
+            this.loadRootNode().then(data => {
+
+                this.renderTreeNode($scope.rootContainer, $scope, data);
+            })
         }
-        else if (this.options.adapter && this.options.adapter.loadChildren) {
 
+        public renderTreeNode(container: JQLite, $parentScope: ng.IScope, data: TreeNodeViewModel): void {
 
-            var loadChildren = this.options.adapter.loadChildren(treeNode.source.id);
+            var template = angular.element(this.$templateCache.get('templates/mcs.tree.node.html') as string);
 
-            if (this.isIPromise(loadChildren)) {
+            var newScope = $parentScope.$new() as ITreeNodeControlScope;
+            newScope.rootController = this;
+            newScope.item = data;
+            newScope.nodeContainer = template.find('.node-container');
 
-                (<ng.IPromise<Array<TreeNode>>>loadChildren).then(data => {
+            this.$controller($TreeNodeController, { $scope: newScope });
+            var clonedElement = this.$compile(template)(newScope);
 
-                    data = data || [];
+            container.append(clonedElement);
+        }
 
-                    var children = this.convertViewModels(data, treeNode.level);
-                    treeNode.children = children;
-                    treeNode.loaded = true;
+        public focusNode(item: TreeNodeViewModel): void {
 
-                    defer.resolve(treeNode.children);
-                });
-            } else {
+            if (this._focusNode) this._focusNode.focus = false;
+            item.focus = true;
+            this._focusNode = item;
 
-                var children = this.convertViewModels(<Array<TreeNode>>loadChildren, treeNode.level);
-                treeNode.children = children;
-                treeNode.loaded = true;
+            //TODO:只有单选才是激活及选择
+            this.selected(item);
+
+            if (this._options.callback && this._options.callback.onClick) {
+
+                this._options.callback.onClick(item.source, {});
+            }
+        }
+
+        //加载根节点
+        public loadRootNode(): ng.IPromise<TreeNodeViewModel> {
+
+            var defer = this.$q.defer<TreeNodeViewModel>();
+
+            if (this.$scope.data) { //相当于缓存
+                defer.resolve(this.convertViewModel(this._options.data, 0));
+            }
+            else if (this._options.data) { //从配置初始化
+
+                var data = angular.copy(this._options.data);
+
+                data.open = this._options.data.children != null; //根节点需要展开
+                this.$scope.data = this.convertViewModel(data, 0);
+
+                defer.resolve(this.$scope.data);
+            } else if (this._options.async && this._options.async.url) { //用HTTP加载
+
+                this.$http.get<TreeNode>(this._options.async.url + '/Root', { params: this._options.async.params }).then(
+                    response => {
+
+                        var data = response.data;
+
+                        if (!data) {
+                            this.toastrService.send('HTTP无法找到节点', '出错了 :(', 2);
+                            return;
+                        }
+
+                        this.$scope.data = this.convertViewModel(data, 0);
+
+                        defer.resolve(this.$scope.data);
+                    },
+                    reason => { this.toastrService.send('HTTP获取根节点失败', '出错了 :(', 3) }
+                );
+            }
+
+            return defer.promise;
+        }
+
+        public loadChildrenTreeNode(treeNode: TreeNodeViewModel): ng.IPromise<Array<TreeNodeViewModel>> {
+
+            var defer = this.$q.defer<Array<TreeNodeViewModel>>();
+
+            if (treeNode.children) {//相当于缓存
                 defer.resolve(treeNode.children);
             }
+            else if (this._options.adapter && this._options.adapter.loadChildren) {
+
+
+                var loadChildren = this._options.adapter.loadChildren(treeNode.source.id);
+
+                if (this.isIPromise(loadChildren)) {
+
+                    (<ng.IPromise<Array<TreeNode>>>loadChildren).then(data => {
+
+                        data = data || [];
+
+                        var children = this.convertViewModels(data, treeNode.level);
+                        treeNode.children = children;
+                        treeNode.loaded = true;
+
+                        defer.resolve(treeNode.children);
+                    });
+                } else {
+
+                    var children = this.convertViewModels(<Array<TreeNode>>loadChildren, treeNode.level);
+                    treeNode.children = children;
+                    treeNode.loaded = true;
+                    defer.resolve(treeNode.children);
+                }
+            }
+
+            return defer.promise;
         }
 
-        return defer.promise;
-    }
+        private selected(item: TreeNodeViewModel): void {
 
-    private isIPromise(source: any) {
+            //TODO:单选、多选
+            if (
+                this.$scope.bindingValue
+                && (<TreeNode>this.$scope.bindingValue).id == item.source.id) {
+                return;
+            }
 
-        return source && typeof (source.then) != 'undefined';
-    }
+            var newData: TreeNode = angular.copy(item.source);
+            newData.children = undefined;
 
-    private convertViewModels(treeNodes: Array<TreeNode>, level: number): Array<TreeNodeViewModel> {
-
-        var result: Array<TreeNodeViewModel> = [];
-
-        for (let index = 0; index < treeNodes.length; index++) {
-            const element = treeNodes[index];
-
-            result.push(this.convertViewModel(element, level));
+            this.$scope.bindingValue = newData;
         }
 
-        return result;
-    }
+        private initializeOptions(options: TreeControlOptions) {
 
-    //把数据源转换为视图模型
-    private convertViewModel(treeNode: TreeNode, level: number): TreeNodeViewModel {
+            if (!options.edit) {
 
-        level++;
-
-        var result: TreeNodeViewModel = {
-            level: level,
-            open: treeNode.open || false,
-            loaded: false,
-            type: treeNode.type || TreeNodeType.folder,
-            source: treeNode
-        };
-
-        if (treeNode.children && treeNode.children.constructor == Array) {
-
-            result.children = [];
-            result.loaded = true;
-
-            for (let index = 0; index < (<Array<TreeNode>>treeNode.children).length; index++) {
-                const element = (<Array<TreeNode>>treeNode.children)[index];
-                result.children.push(this.convertViewModel(element, level));
+                options.edit = {
+                    enable: false,
+                    allowAdd: false,
+                    allowDel: false,
+                    allowEdit: false
+                }
+            } else {
+                options.edit.enable = typeof (options.edit.enable) == 'undefined' ? false : options.edit.enable;
+                options.edit.allowAdd = typeof (options.edit.allowAdd) == 'undefined' ? options.edit.enable : options.edit.allowAdd;
+                options.edit.allowDel = typeof (options.edit.allowDel) == 'undefined' ? options.edit.enable : options.edit.allowDel;
+                options.edit.allowEdit = typeof (options.edit.allowEdit) == 'undefined' ? options.edit.enable : options.edit.allowEdit;
             }
         }
 
-        return result;
+        private isIPromise(source: any) {
+
+            return source && typeof (source.then) != 'undefined';
+        }
+
+        private convertViewModels(treeNodes: Array<TreeNode>, level: number): Array<TreeNodeViewModel> {
+
+            var result: Array<TreeNodeViewModel> = [];
+
+            for (let index = 0; index < treeNodes.length; index++) {
+                const element = treeNodes[index];
+
+                var newVm = this.convertViewModel(element, level);
+
+                if (newVm) result.push(newVm);
+            }
+
+            return result;
+        }
+
+        //把数据源转换为视图模型
+        private convertViewModel(treeNode: TreeNode, level: number): TreeNodeViewModel | undefined {
+
+            if (!treeNode) { return undefined };
+
+            var target: TreeNode = treeNode as TreeNode;
+
+            level++;
+
+            var result: TreeNodeViewModel = {
+                level: level,
+                open: target.open || false,
+                loaded: false,
+                type: target.type || TreeNodeType.folder,
+                source: treeNode,
+                focus: false,
+                allowAdd: typeof (treeNode.allowAdd) == 'undefined' ? this._options.edit.allowAdd : treeNode.allowAdd,
+                allowDel: typeof (treeNode.allowDel) == 'undefined' ? this._options.edit.allowDel : treeNode.allowDel,
+                allowEdit: typeof (treeNode.allowEdit) == 'undefined' ? this._options.edit.allowEdit : treeNode.allowEdit,
+            };
+
+            if (target.children && target.children.constructor == Array) {
+
+                result.children = this.convertViewModels(target.children, level);
+            }
+
+            return result;
+        }
     }
-}
 
-//树节点的Scope
-interface ITreeNodeControlScope extends ng.IScope {
-    item: TreeNodeViewModel;
-    nodeContainer: JQLite;
-    rootController: $TreeControlController;
+    //树节点的Scope
+    interface ITreeNodeControlScope extends ng.IScope {
+        item: TreeNodeViewModel;
+        nodeContainer: JQLite;
+        rootController: $TreeControlController;
 
-    expand: () => void;
-}
+        expand: () => void;
+        focusNode: () => void;
+    }
 
-//树节点的控制器
-class $TreeNodeController {
+    //树节点的控制器
+    class $TreeNodeController {
 
-    static $inject: Array<string> = ['$scope'];
-    constructor(
-        private $scope: ITreeNodeControlScope,
-    ) {
+        static $inject: Array<string> = ['$scope'];
+        constructor(
+            private $scope: ITreeNodeControlScope,
+        ) {
 
-        $scope.expand = () => {
+            $scope.expand = () => {
 
-            $scope.item.open = !$scope.item.open;
+                $scope.item.open = !$scope.item.open;
 
-            if (!$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
+                if (!$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
+
+                    this.internalRenderChildren($scope);
+                }
+            }
+
+            $scope.focusNode = () => {
+                $scope.rootController.focusNode($scope.item);
+            };
+
+            if ($scope.item.open && $scope.item.type == TreeNodeType.folder) {
 
                 this.internalRenderChildren($scope);
             }
         }
 
-        if ($scope.item.open && $scope.item.type == TreeNodeType.folder) {
+        private internalRenderChildren($scope: ITreeNodeControlScope) {
 
-            this.internalRenderChildren($scope);
+            $scope.rootController.loadChildrenTreeNode($scope.item).then(data => {
+
+                for (let index = 0; index < data.length; index++) {
+
+                    const element = data[index];
+                    $scope.rootController.renderTreeNode($scope.nodeContainer, $scope, element);
+                }
+            });
         }
     }
 
-    private internalRenderChildren($scope: ITreeNodeControlScope) {
+    //Directive 的定义
+    class $TreeControlDirective implements ng.IDirective<ITreeControlScope> {
 
-        $scope.rootController.loadChildrenTreeNode($scope.item).then(data => {
+        static factory(): ng.IDirectiveFactory<ITreeControlScope> {
 
-            for (let index = 0; index < data.length; index++) {
+            const directive = () => new $TreeControlDirective();
+            //directive.$inject = [];
+            return directive;
+        }
 
-                const element = data[index];
-                $scope.rootController.renderTreeNode($scope.nodeContainer, $scope, element);
-            }
-        });
+        constructor(
+        ) {
+        }
+
+        templateUrl = 'templates/mcs.tree.html';
+        restrict = 'A';
+        scope = {
+            optionsName: '@mcsTree',
+            bindingValue: '=',
+            readonly: '=?mcsReadonly'
+        };
+
+        controller = $TreeControlController;
+
+        link = (
+            scope: ITreeControlScope,
+            instanceElement: JQLite,
+            instanceAttributes: ng.IAttributes,
+            controller?: ng.IController | ng.IController[] | { [key: string]: ng.IController },
+            transclude?: ng.ITranscludeFunction
+        ): void => {
+
+            scope.rootContainer = instanceElement.find('.ztree');
+        }
     }
+
+    var tree = angular.module('mcs.contols.tree', ['mcs.controls.templates']);
+    tree.directive('mcsTree', $TreeControlDirective.factory());
 }
-
-//Directive 的定义
-class $TreeControlDirective implements ng.IDirective<ITreeControlScope> {
-
-    static factory(): ng.IDirectiveFactory<ITreeControlScope> {
-
-        const directive = () => new $TreeControlDirective();
-        //directive.$inject = [];
-        return directive;
-    }
-
-    constructor(
-    ) {
-    }
-
-    templateUrl = 'templates/mcs.tree.html';
-    restrict = 'A';
-    scope = {
-        optionsName: '@mcsTree',
-        bindingValue: '=',
-        readonly: '=?mcsReadonly'
-    };
-
-    controller = $TreeControlController;
-
-    link = (
-        scope: ITreeControlScope,
-        instanceElement: JQLite,
-        instanceAttributes: ng.IAttributes,
-        controller?: ng.IController | ng.IController[] | { [key: string]: ng.IController },
-        transclude?: ng.ITranscludeFunction
-    ): void => {
-
-        scope.rootContainer = instanceElement.find('.ztree');
-    }
-}
-
-var module = angular.module('mcs.contols.tree', ['mcs.controls.templates'])
-module.directive('mcsTree', $TreeControlDirective.factory())

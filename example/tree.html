@@ -30,7 +30,7 @@
     <div class="container">
 
         <div class="panel panel-default">
-            <div class="panel-heading">Normal <input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
+            <div class="panel-heading">Normal</div>
             <div class="panel-body">
                 <p>
                     <div mcs-tree="treeOptions" binding-value="normal_val"> </div>
@@ -51,9 +51,9 @@
 
             var app = angular.module('app', ['mcs.contols']);
 
-            app.controller('ExampleController', ['$scope', function ($scope) {
+            app.controller('ExampleController', ['$scope', 'toastrService', function ($scope, toastrService) {
 
-                let loadChildren = function (parentID) {
+                var loadChildren = function (parentID) {
 
                     return [
                         { id: parentID + '001', name: parentID + '的第一孩子', },
@@ -62,9 +62,17 @@
                     ];
                 };
 
+                var onClickTest = '选择了：';
+
                 $scope.treeOptions = {
                     adapter: {
                         loadChildren: loadChildren
+                    },
+                    edit: {
+                        enable: true
+                    },
+                    callback: {
+                        onClick: function (node, context) { toastrService.send(onClickTest + node.name + node.id); }
                     },
                     data: {
                         id: '001',
