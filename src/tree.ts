@@ -29,8 +29,13 @@ namespace mcscontrols {
 
     //树控件的配置中适配器的设定
     interface TreeControlAdapterOptions {
-        loadRootNode?: ((parentID: string) => ng.IPromise<TreeNode>) | ((parentID: string) => TreeNode);
-        loadChildren?: ((parentID: string) => ng.IPromise<Array<TreeNode>>) | ((parentID: string) => Array<TreeNode>);
+        loadRootNode?:
+        ((parentID: string, parameters: any) => ng.IPromise<TreeNode>)
+        | ((parentID: string, parameters: any) => TreeNode);
+
+        loadChildren?:
+        ((parentID: string, parameters: any) => ng.IPromise<Array<TreeNode>>)
+        | ((parentID: string, parameters: any) => Array<TreeNode>);
     }
 
     //树节点的类型
@@ -155,7 +160,12 @@ namespace mcscontrols {
                 defer.resolve(this.$scope.data);
             } else if (this._options.async && this._options.async.url) { //用HTTP加载
 
-                this.$http.get<TreeNode>(this._options.async.url + '/Root', { params: this._options.async.params }).then(
+                var params = null;
+                if (this._options.async && this._options.async.params) {
+                    params = this._options.async.params;
+                }
+
+                this.$http.get<TreeNode>(this._options.async.url + '/Root', { params: params }).then(
                     response => {
 
                         var data = response.data;
@@ -179,14 +189,21 @@ namespace mcscontrols {
         public loadChildrenTreeNode(treeNode: TreeNodeViewModel): ng.IPromise<Array<TreeNodeViewModel>> {
 
             var defer = this.$q.defer<Array<TreeNodeViewModel>>();
+            var options: TreeControlOptions = this._options;
 
             if (treeNode.children) {//相当于缓存
                 defer.resolve(treeNode.children);
             }
-            else if (this._options.adapter && this._options.adapter.loadChildren) {
+            else if (options.adapter && options.adapter.loadChildren) {
 
+                var params = null;
 
-                var loadChildren = this._options.adapter.loadChildren(treeNode.source.id);
+                if (options.async && options.async.params) {
+
+                    params = options.async.params;
+                }
+
+                var loadChildren = options.adapter.loadChildren(treeNode.source.id, params);
 
                 if (this.isIPromise(loadChildren)) {
 

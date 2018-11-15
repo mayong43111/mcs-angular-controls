@@ -101,7 +101,8 @@ var mcscontrols;
         'mcs.contols.radiolist',
         'mcs.contols.toastr',
         'mcs.contols.tree',
-        'mcs.contols.modal'
+        'mcs.contols.modal',
+        'mcs.contols.table.pagination'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -219,6 +220,9 @@ var mcscontrols;
                     destroy();
                     defer.resolve(data);
                 };
+                if (options.controller) {
+                    _this.$controller(options.controller, { $scope: newScope });
+                }
                 var clonedElement = _this.$compile(template)(newScope);
                 angular.element(document).find('body').append(clonedElement);
             });
@@ -435,6 +439,130 @@ var mcscontrols;
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var $TablePaginationController = /** @class */ (function () {
+        function $TablePaginationController($scope, $q, toastrService) {
+            var _this = this;
+            this.$scope = $scope;
+            this.$q = $q;
+            var options = $scope.$parent.$eval($scope.optionsName);
+            if (!options)
+                throw 'Must have options';
+            var pagination = {
+                pageIndex: 0,
+                pageSize: options.pageSize || 20
+            };
+            this.loadPaginationData(pagination, options).then(function (data) {
+                _this.initializeScope(data, $scope);
+            });
+        }
+        $TablePaginationController.prototype.initializeScope = function (source, $scope) {
+            $scope.data = source.data;
+            $scope.currentPageIndex = source.pageIndex;
+            $scope.currentPageSize = source.pageSize;
+            $scope.currentTotalCount = source.totalCount;
+        };
+        $TablePaginationController.prototype.loadPaginationData = function (pagination, options) {
+            var defer = this.$q.defer();
+            var params = null;
+            if (options.async && options.async.params) {
+                params = options.async.params;
+            }
+            if (options.adapter && options.adapter.loadPaginationData) {
+                var loadData = options.adapter.loadPaginationData(pagination, params);
+                if (this.isIPromise(loadData)) {
+                    loadData.then(function (data) {
+                        defer.resolve(data);
+                    });
+                }
+                else {
+                    defer.resolve(loadData);
+                }
+            }
+            return defer.promise;
+        };
+        $TablePaginationController.prototype.isIPromise = function (source) {
+            return source && typeof (source.then) != 'undefined';
+        };
+        $TablePaginationController.$inject = ['$scope', '$q', 'toastrService'];
+        return $TablePaginationController;
+    }());
+    var $TablePaginationDirective = /** @class */ (function () {
+        function $TablePaginationDirective($templateCache, $compile) {
+            var _this = this;
+            this.$templateCache = $templateCache;
+            this.$compile = $compile;
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                optionsName: '@mcsTablePagination',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = $TablePaginationController;
+            this.template = function (tElement, tAttrs) {
+                var tableInfo = _this.getTableInfo(tElement);
+                _this.initializePagination(tableInfo);
+                _this.initializeBody(tableInfo);
+                tElement.removeAttr('mcs-table-pagination');
+                return tElement[0].outerHTML;
+            };
+        }
+        $TablePaginationDirective.factory = function () {
+            var directive = function (a, b) { return new $TablePaginationDirective(a, b); };
+            directive.$inject = ['$templateCache', '$compile'];
+            return directive;
+        };
+        $TablePaginationDirective.prototype.getTableInfo = function (instanceElement) {
+            var tbody = instanceElement.find('tbody');
+            if (tbody.length != 1)
+                throw 'Tables can only have one tbody;';
+            var tbodyTemplete = tbody.find('tr');
+            if (tbodyTemplete.length == 0)
+                throw 'tbody must have tr;';
+            var columnsCount = 0;
+            for (var index = 0; index < tbodyTemplete[0].children.length; index++) {
+                var element = tbodyTemplete[0].children[index];
+                columnsCount += (Number(element.getAttribute('colspan')) || 1);
+            }
+            return {
+                table: instanceElement,
+                tBody: tbody,
+                tfoot: instanceElement.find('tfoot'),
+                columnsCount: columnsCount,
+            };
+        };
+        $TablePaginationDirective.prototype.initializeBody = function (tableInfo) {
+            var tBoydTR = tableInfo.tBody.find('tr');
+            if (tBoydTR.length == 1) {
+                tBoydTR.attr('ng-repeat', 'item in data track by $index');
+            }
+            else {
+                tBoydTR[0].setAttribute('ng-repeat-start', 'item in data track by $index');
+                tBoydTR[tBoydTR.length - 1].setAttribute('ng-repeat-end', '');
+            }
+        };
+        $TablePaginationDirective.prototype.initializePagination = function (tableInfo) {
+            var tfoot = tableInfo.tfoot;
+            if (tfoot.length == 0) {
+                tfoot = angular.element('<tfoot></tfoot>');
+                tableInfo.table.append(tfoot);
+            }
+            var paginationTemplate = this.$templateCache.get('templates/mcs.table.pagination.html');
+            var paginationTD = angular.element('<td></td>').append(paginationTemplate);
+            paginationTD.attr('colspan', tableInfo.columnsCount);
+            var paginationTR = angular.element('<tr></tr>');
+            paginationTR.append(paginationTD);
+            tfoot.append(paginationTR);
+        };
+        return $TablePaginationDirective;
+    }());
+    var tablePagination = angular.module('mcs.contols.table.pagination', ['mcs.controls.templates']);
+    tablePagination.directive('mcsTablePagination', $TablePaginationDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
     var ToastrLevel;
     (function (ToastrLevel) {
         ToastrLevel[ToastrLevel["Info"] = 0] = "Info";
@@ -594,7 +722,11 @@ var mcscontrols;
                 defer.resolve(this.$scope.data);
             }
             else if (this._options.async && this._options.async.url) { //用HTTP加载
-                this.$http.get(this._options.async.url + '/Root', { params: this._options.async.params }).then(function (response) {
+                var params = null;
+                if (this._options.async && this._options.async.params) {
+                    params = this._options.async.params;
+                }
+                this.$http.get(this._options.async.url + '/Root', { params: params }).then(function (response) {
                     var data = response.data;
                     if (!data) {
                         _this.toastrService.send('HTTP无法找到节点', '出错了 :(', 2);
@@ -609,11 +741,16 @@ var mcscontrols;
         $TreeControlController.prototype.loadChildrenTreeNode = function (treeNode) {
             var _this = this;
             var defer = this.$q.defer();
+            var options = this._options;
             if (treeNode.children) { //相当于缓存
                 defer.resolve(treeNode.children);
             }
-            else if (this._options.adapter && this._options.adapter.loadChildren) {
-                var loadChildren = this._options.adapter.loadChildren(treeNode.source.id);
+            else if (options.adapter && options.adapter.loadChildren) {
+                var params = null;
+                if (options.async && options.async.params) {
+                    params = options.async.params;
+                }
+                var loadChildren = options.adapter.loadChildren(treeNode.source.id, params);
                 if (this.isIPromise(loadChildren)) {
                     loadChildren.then(function (data) {
                         data = data || [];

@@ -19,6 +19,8 @@ $templateCache.put("templates/mcs.radio.list.html","<div><label ng-repeat=\"opti
 
 $templateCache.put("templates/mcs.select.html","<span><select class=\"form-control\" ng-if=\"!readonly\" ng-model=\"$parent.bindingValue\" ng-options=\"option.value as option.text for option in $parent.internalOptions\"></select> <span ng-if=\"readonly\">{{bindingText || bindingValue}}</span></span>")
 
+$templateCache.put("templates/mcs.table.pagination.html","<ul class=\"pagination\" style=\"margin: 0;\"><li><a href=\"#\"><span>&laquo;</span></a></li><li><a href=\"#\">1</a></li><li><a href=\"#\">2</a></li><li><a href=\"#\">3</a></li><li><a href=\"#\">4</a></li><li><a href=\"#\">5</a></li><li><a href=\"#\"><span>&raquo;</span></a></li></ul>")
+
 $templateCache.put("templates/mcs.toast.html","<div id=\"toast-container\" class=\"toast-top-right\"><div class=\"toast toast-{{message.className}}\" ng-repeat=\"message in messages\"><div class=\"toast-progress\" ng-style=\"{ width: message.remaining }\"></div><button type=\"button\" class=\"toast-close-button\" ng-click=\"setRemainingTimeZero(message)\">×</button><div class=\"toast-title\">{{message.title}}</div><div class=\"toast-message\">{{message.content}}</div></div></div>")
 
 $templateCache.put("templates/mcs.tree.html","<ul class=\"ztree\" style=\"background-color: #f8fafb;\"></ul>")

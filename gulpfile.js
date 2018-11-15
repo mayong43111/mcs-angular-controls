@@ -68,6 +68,10 @@ gulp.task('img-copy', function () {
         .pipe(copy('dist/img', { prefix: 2 }));
 });
 
-gulp.task('default', ['compress-js', 'compress-css', 'img-copy'], function () {
+gulp.task('all', ['compress-js', 'compress-css', 'img-copy'], function () {
+
+});
+
+gulp.task('default', ['compress-js'], function () {
 
 });

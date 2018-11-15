@@ -62,6 +62,11 @@
 
             var app = angular.module('app', ['mcs.contols']);
 
+            var openTestController = ['$scope', 'toastrService', function ($scope, toastrService) {
+
+                toastrService.send('打开了弹框，传入Email ：' + $scope.data.email);
+            }];
+
             app.controller('ExampleController', ['$scope', 'modalService', 'toastrService', function ($scope, modalService, toastrService) {
 
                 $scope.sendMessage = function (content, level) {
@@ -74,7 +79,8 @@
 
                     modalService.open({
                         templateUrl: './modal.test1.html',
-                        data: $scope.testData
+                        data: $scope.testData,
+                        controller: openTestController
                     }).then(function (data) { $scope.testData = data; });
                 }
             }]);

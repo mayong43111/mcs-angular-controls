@@ -5,9 +5,9 @@ namespace mcscontrols {
         data: any;
         size?: ModalSize,
         className?: string;
-        template?: string,
-        templateUrl?: string
-        controller?: ng.IController
+        template?: string;
+        templateUrl?: string;
+        controller?: (...args: any[]) => ng.IController;
     }
 
     interface IModalScope extends ng.IScope {
@@ -77,6 +77,11 @@ namespace mcscontrols {
                     destroy();
                     defer.resolve(data);
                 };
+
+                if (options.controller) {
+
+                    this.$controller(options.controller, { $scope: newScope });
+                }
 
                 var clonedElement = this.$compile(template)(newScope);
 

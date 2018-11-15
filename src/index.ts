@@ -9,6 +9,7 @@ namespace mcscontrols {
         'mcs.contols.radiolist',
         'mcs.contols.toastr',
         'mcs.contols.tree',
-        'mcs.contols.modal'
+        'mcs.contols.modal',
+        'mcs.contols.table.pagination'
     ]);
 }
