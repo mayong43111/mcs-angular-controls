@@ -1,0 +1,8 @@
+<span>
+    <div ng-if="!readonly" class="input-group date form_datetime">
+        <input class="form-control" type="text" readonly>
+        <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+        <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
+    </div>
+    <span ng-if="readonly">{{bindingValue | date: options.readonlyFormat }}</span>
+</span>

@@ -10,6 +10,7 @@ namespace mcscontrols {
         'mcs.contols.toastr',
         'mcs.contols.tree',
         'mcs.contols.modal',
-        'mcs.contols.table.pagination'
+        'mcs.contols.table.pagination',
+        'mcs.contols.input.date'
     ]);
 }

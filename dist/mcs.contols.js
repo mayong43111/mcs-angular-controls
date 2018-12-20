@@ -102,7 +102,8 @@ var mcscontrols;
         'mcs.contols.toastr',
         'mcs.contols.tree',
         'mcs.contols.modal',
-        'mcs.contols.table.pagination'
+        'mcs.contols.table.pagination',
+        'mcs.contols.input.date'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -144,6 +145,68 @@ var mcscontrols;
     }());
     var checkbox = angular.module('mcs.contols.input.checkbox', ['mcs.controls.templates']);
     checkbox.directive('mcsInputCheckbox', $CheckboxControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
+    var $DateControlDirective = /** @class */ (function () {
+        function $DateControlDirective() {
+            this.templateUrl = 'templates/mcs.input.date.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                bindingOptions: '=',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', function ($scope) {
+                    var defaultOptions = {
+                        format: "yyyy-mm-dd",
+                        readonlyFormat: "yyyy-MM-dd",
+                        autoclose: true,
+                        todayBtn: 'linked',
+                        todayHighlight: 'true',
+                        minView: 2,
+                        language: 'zh-CN'
+                    };
+                    $scope.options = angular.extend({}, defaultOptions, $scope.bindingOptions);
+                }];
+            this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+                var datetimepicker;
+                scope.$watch('bindingValue', function (newValue, oldValue) {
+                    if (datetimepicker) {
+                        datetimepicker.datetimepicker('update', newValue);
+                    }
+                });
+                scope.$watch('readonly', function (newValue, oldValue) {
+                    if (newValue) {
+                        if (datetimepicker) {
+                            datetimepicker.datetimepicker('remove'); //TODO: 没生效
+                        }
+                    }
+                    else {
+                        datetimepicker = instanceElement.find('.form_datetime')
+                            .datetimepicker(scope.options)
+                            .on('changeDate', function (event) {
+                            scope.$apply(function () {
+                                scope.bindingValue = event.date;
+                            });
+                        });
+                        datetimepicker.datetimepicker('update', scope.bindingValue);
+                    }
+                });
+            };
+        }
+        $DateControlDirective.factory = function () {
+            var directive = function () { return new $DateControlDirective(); };
+            //directive.$inject = [];
+            return directive;
+        };
+        return $DateControlDirective;
+    }());
+    var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
+    inputDate.directive('mcsInputDate', $DateControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";

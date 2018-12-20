@@ -1,0 +1,73 @@
+﻿body {
+    background-color: #f5f5f5;
+    color: #5f5f5f;
+    padding: 0 30px;
+    font-size: 13px;
+}
+
+.navbar-custom {
+    background-color: #35af99;
+    min-height: 40px;
+    margin-bottom: 0;
+}
+
+.page {
+    background-color: #fff;
+    padding: 10px 50px 50px 50px;
+}
+
+.req {
+    color: red;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.table-layout {
+    width: 100%;
+    margin: 0;
+}
+
+.title, .title input {
+    color: #404040;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-color: #fff;
+    margin: 0;
+}
+
+.title>h1 {
+    font-size: 24px;
+}
+
+.panel-form {
+    border: 0;
+}
+
+.panel-form>.panel-heading {
+    border-bottom: 2px solid #35af99;
+    background-color: #fff;
+    padding: 5px 5px;
+}
+
+.panel-form>.panel-body {
+    padding: 0;
+}
+
+.form-control {
+    font-size: 12px;
+    padding: 2px 5px;
+    height: 24px;
+    width: 100%;
+    max-width: 100%;
+    margin-right: 5px;
+}
+
+.control-label {
+    font-size: 12px;
+    padding: 3px 5px;
+    height: 24px;
+    margin: 0;
+}

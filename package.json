@@ -7,6 +7,7 @@
   "devDependencies": {
     "@types/angular": "^1.6.51",
     "angular": "^1.2.32",
+    "es5-shim": "^4.5.12",
     "gulp": "^3.9.1",
     "gulp-clean-css": "^3.10.0",
     "gulp-concat": "^2.6.1",

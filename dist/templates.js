@@ -9,6 +9,8 @@ $templateCache.put("templates/mcs.checkbox.list.html","<div><label ng-repeat=\"o
 
 $templateCache.put("templates/mcs.input.checkbox.html","<input type=\"checkbox\" ng-model=\"bindingValue\" ng-disabled=\"readonly\">")
 
+$templateCache.put("templates/mcs.input.date.html","<span><div ng-if=\"!readonly\" class=\"input-group date form_datetime\"><input class=\"form-control\" type=\"text\" readonly=\"readonly\"> <span class=\"input-group-addon\"><span class=\"glyphicon glyphicon-remove\"></span></span> <span class=\"input-group-addon\"><span class=\"glyphicon glyphicon-th\"></span></span></div><span ng-if=\"readonly\">{{bindingValue | date: options.readonlyFormat }}</span></span>")
+
 $templateCache.put("templates/mcs.input.text.html","<span><input type=\"text\" ng-if=\"!readonly\" class=\"form-control\" ng-model=\"$parent.bindingValue\"> <span ng-if=\"readonly\">{{bindingValue}}</span></span>")
 
 $templateCache.put("templates/mcs.modal.alert.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"closed()\">确定</button></div>")
