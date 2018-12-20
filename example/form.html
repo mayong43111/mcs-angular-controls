@@ -77,7 +77,7 @@
                                 <label class="control-label">拿地时间</label>
                             </td>
                             <td width="35%">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                                <input mcs-input-date binding-value="formData.toLocalDate" />
                             </td>
                         </tr>
                         <tr>
@@ -100,7 +100,7 @@
                                 <label class="control-label">合作方信息</label>
                             </td>
                             <td width="85%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                                <input mcs-input-textarea binding-value="formData.partnerInformation" />
                             </td>
                         </tr>
                         <tr>
@@ -108,7 +108,7 @@
                                 <label class="control-label">条线分工</label>
                             </td>
                             <td width="85%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                                <input mcs-input-textarea binding-value="formData.partnerPlacement" />
                             </td>
                         </tr>
                     </tbody>
@@ -471,6 +471,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
     <script src="../node_modules/angular/angular.js"></script>
     <script src="../plugs/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
+    <script src="../plugs/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
     <script src="../dist/templates.js"></script>
     <script src="../dist/mcs.contols.js"></script>
     <script src="./js/form.js"></script>

@@ -11,6 +11,7 @@ namespace mcscontrols {
         'mcs.contols.tree',
         'mcs.contols.modal',
         'mcs.contols.table.pagination',
-        'mcs.contols.input.date'
+        'mcs.contols.input.date',
+        'mcs.contols.input.textarea'
     ]);
 }

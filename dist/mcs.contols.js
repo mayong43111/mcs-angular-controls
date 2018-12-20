@@ -103,7 +103,8 @@ var mcscontrols;
         'mcs.contols.tree',
         'mcs.contols.modal',
         'mcs.contols.table.pagination',
-        'mcs.contols.input.date'
+        'mcs.contols.input.date',
+        'mcs.contols.input.textarea'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -233,6 +234,59 @@ var mcscontrols;
     }());
     var inputText = angular.module('mcs.contols.input.text', ['mcs.controls.templates']);
     inputText.directive('mcsInputText', $TextControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
+    var $TextareaControlDirective = /** @class */ (function () {
+        function $TextareaControlDirective() {
+            this.templateUrl = 'templates/mcs.input.textarea.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', function ($scope) {
+                }];
+            this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+                var textarea;
+                var initHeight;
+                var autoHeight = function () {
+                    var scrollHeight = textarea.scrollHeight + 2;
+                    var newHeight = initHeight > scrollHeight ? initHeight : scrollHeight;
+                    textarea.style.height = newHeight + 'px';
+                };
+                scope.$watch('readonly', function (newValue, oldValue) {
+                    if (newValue) {
+                    }
+                    else {
+                        textarea = instanceElement.find('textarea')[0];
+                        textarea.style['overflow-y'] = 'hidden';
+                        textarea.style['word-break'] = 'break-all';
+                        textarea.style['resize'] = 'none';
+                        textarea.scrollTop = 0;
+                        initHeight = textarea.scrollHeight;
+                        autoHeight();
+                    }
+                });
+                scope.$watch('bindingValue', function (newValue, oldValue) {
+                    if (textarea) {
+                        autoHeight();
+                    }
+                });
+            };
+        }
+        $TextareaControlDirective.factory = function () {
+            var directive = function () { return new $TextareaControlDirective(); };
+            //directive.$inject = [];
+            return directive;
+        };
+        return $TextareaControlDirective;
+    }());
+    var inputText = angular.module('mcs.contols.input.textarea', ['mcs.controls.templates']);
+    inputText.directive('mcsInputTextarea', $TextareaControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";

@@ -1,0 +1,4 @@
+<span>
+    <textarea ng-if="!readonly" class="form-control" rows="3" ng-trim="false" ng-model="$parent.bindingValue"></textarea>
+    <pre ng-if="readonly" class="textarea-readonly">{{bindingValue}}</pre>
+</span>
