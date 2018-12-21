@@ -17,7 +17,7 @@ var mcscontrols;
                         if (scope.bindingOptions && scope.bindingOptions.constructor == Array && scope.bindingOptions.length > 0) {
                             for (var index = 0; index < scope.bindingOptions.length; index++) {
                                 var element = angular.copy(scope.bindingOptions[index]);
-                                element.text = element.text || element.value;
+                                element.name = element.name || element.id;
                                 scope.internalOptions.push(element);
                             }
                         }
@@ -26,7 +26,7 @@ var mcscontrols;
                     var hasValue = function (options, option) {
                         for (var index = 0; index < options.length; index++) {
                             var element = options[index];
-                            if (option.value == element.value) {
+                            if (option.id == element.id) {
                                 return true;
                             }
                         }
@@ -63,7 +63,7 @@ var mcscontrols;
                         if (option.selected) {
                             for (var index = 0; index < $scope.bindingValue.length; index++) {
                                 var element = $scope.bindingValue[index];
-                                if (element.value == option.value) {
+                                if (element.id == option.id) {
                                     $scope.bindingValue.splice(index, 1);
                                     return;
                                 }
@@ -71,8 +71,8 @@ var mcscontrols;
                         }
                         else {
                             $scope.bindingValue.push({
-                                value: option.value,
-                                text: option.text
+                                id: option.id,
+                                name: option.name
                             });
                         }
                     };
@@ -585,14 +585,14 @@ var mcscontrols;
                         if (scope.bindingOptions && scope.bindingOptions.constructor == Array && scope.bindingOptions.length > 0) {
                             for (var index = 0; index < scope.bindingOptions.length; index++) {
                                 var element = angular.copy(scope.bindingOptions[index]);
-                                element.text = element.text || element.value;
+                                element.name = element.name || element.id;
                                 scope.internalOptions.push(element);
                             }
                         }
                         initializebindingValue(scope.bindingValue); // 就是为了触发重新绑定，其实
                     };
                     var hasValue = function (option, value) {
-                        return value == option.value;
+                        return value == option.id;
                     };
                     var initializebindingValue = function (newValue) {
                         var haslOption = false;
@@ -609,8 +609,8 @@ var mcscontrols;
                             }
                             else if (typeof ($scope.bindingValue) != 'undefined') {
                                 $scope.internalOptions.push({
-                                    value: $scope.bindingValue,
-                                    text: $scope.bindingText || $scope.bindingValue
+                                    id: $scope.bindingValue,
+                                    name: $scope.bindingText || $scope.bindingValue
                                 });
                             }
                         }
@@ -621,8 +621,8 @@ var mcscontrols;
                         if (newValue && scope.internalOptions && scope.internalOptions.length > 0) {
                             for (var index = 0; index < scope.internalOptions.length; index++) {
                                 var element = scope.internalOptions[index];
-                                if (element.value == scope.bindingValue) {
-                                    scope.bindingText = element.text;
+                                if (element.id == scope.bindingValue) {
+                                    scope.bindingText = element.name;
                                     break;
                                 }
                             }
@@ -662,7 +662,7 @@ var mcscontrols;
                         if (scope.readonly)
                             return;
                         scope.internalOptions = [];
-                        scope.internalOptions.push({ value: '', text: '请选择...' });
+                        scope.internalOptions.push({ id: '', name: '请选择...' });
                         if (scope.bindingOptions && scope.bindingOptions.constructor == Array && scope.bindingOptions.length > 0) {
                             var hasValue = false;
                             for (var index = 0; index < scope.bindingOptions.length; index++) {
@@ -670,7 +670,7 @@ var mcscontrols;
                                 if (!element)
                                     continue; //IE8
                                 scope.internalOptions.push(angular.copy(element));
-                                if (element.value == scope.bindingValue) {
+                                if (element.id == scope.bindingValue) {
                                     hasValue = true;
                                 }
                             }
@@ -680,8 +680,8 @@ var mcscontrols;
                         }
                         else if (scope.bindingValue) {
                             scope.internalOptions.push({
-                                value: scope.bindingValue,
-                                text: scope.bindingText || scope.bindingValue
+                                id: scope.bindingValue,
+                                name: scope.bindingText || scope.bindingValue
                             });
                         }
                     };
@@ -692,8 +692,8 @@ var mcscontrols;
                         if (newValue && scope.internalOptions && scope.internalOptions.length > 0) {
                             for (var index = 0; index < scope.internalOptions.length; index++) {
                                 var element = scope.internalOptions[index];
-                                if (element.value == scope.bindingValue) {
-                                    scope.bindingText = element.text;
+                                if (element.id == scope.bindingValue) {
+                                    scope.bindingText = element.name;
                                     break;
                                 }
                             }

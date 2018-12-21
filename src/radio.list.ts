@@ -33,7 +33,7 @@ namespace mcscontrols {
                     for (let index = 0; index < scope.bindingOptions.length; index++) {
 
                         const element = angular.copy(scope.bindingOptions[index]);
-                        element.text = element.text || element.value;
+                        element.name = element.name || element.id;
 
                         scope.internalOptions.push(element);
                     }
@@ -44,7 +44,7 @@ namespace mcscontrols {
 
             let hasValue = function (option: any, value: any): boolean {
 
-                return value == option.value;
+                return value == option.id;
             }
 
             let initializebindingValue = function (newValue: Array<any>) {
@@ -69,8 +69,8 @@ namespace mcscontrols {
                     } else if (typeof ($scope.bindingValue) != 'undefined') {
 
                         $scope.internalOptions.push({
-                            value: $scope.bindingValue,
-                            text: $scope.bindingText || $scope.bindingValue
+                            id: $scope.bindingValue,
+                            name: $scope.bindingText || $scope.bindingValue
                         });
                     }
                 }
@@ -86,8 +86,8 @@ namespace mcscontrols {
                     for (let index = 0; index < scope.internalOptions.length; index++) {
                         const element = scope.internalOptions[index];
 
-                        if (element.value == scope.bindingValue) {
-                            scope.bindingText = element.text;
+                        if (element.id == scope.bindingValue) {
+                            scope.bindingText = element.name;
                             break;
                         }
                     }

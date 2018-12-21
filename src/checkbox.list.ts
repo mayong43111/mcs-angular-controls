@@ -32,7 +32,7 @@ namespace mcscontrols {
                     for (let index = 0; index < scope.bindingOptions.length; index++) {
 
                         const element = angular.copy(scope.bindingOptions[index]);
-                        element.text = element.text || element.value;
+                        element.name = element.name || element.id;
 
                         scope.internalOptions.push(element);
                     }
@@ -47,7 +47,7 @@ namespace mcscontrols {
 
                     const element = options[index];
 
-                    if (option.value == element.value) {
+                    if (option.id == element.id) {
 
                         return true;
                     }
@@ -101,7 +101,7 @@ namespace mcscontrols {
 
                         const element = $scope.bindingValue[index];
 
-                        if (element.value == option.value) {
+                        if (element.id == option.id) {
 
                             $scope.bindingValue.splice(index, 1);
                             return;
@@ -109,8 +109,8 @@ namespace mcscontrols {
                     }
                 } else {
                     $scope.bindingValue.push({
-                        value: option.value,
-                        text: option.text
+                        id: option.id,
+                        name: option.name
                     });
                 }
             }

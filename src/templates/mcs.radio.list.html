@@ -1,5 +1,5 @@
 <div>
     <label ng-repeat="option in internalOptions">
-        <input type="radio" ng-model="$parent.bindingValue" ng-value="option.value" ng-disabled="readonly">{{option.text}}
+        <input type="radio" ng-model="$parent.bindingValue" ng-value="option.id" ng-disabled="readonly">{{option.name}}
     </label>
 </div>

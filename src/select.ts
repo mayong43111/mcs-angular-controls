@@ -24,8 +24,6 @@ namespace mcscontrols {
 
         controller = ['$scope', function ($scope: any) {
 
-
-
             let initialize = function (scope: any): void {
 
                 scope.bindingValue = scope.bindingValue || '';
@@ -33,7 +31,7 @@ namespace mcscontrols {
                 if (scope.readonly) return;
 
                 scope.internalOptions = [];
-                scope.internalOptions.push({ value: '', text: '请选择...' });
+                scope.internalOptions.push({ id: '', name: '请选择...' });
 
                 if (scope.bindingOptions && scope.bindingOptions.constructor == Array && scope.bindingOptions.length > 0) {
 
@@ -46,7 +44,7 @@ namespace mcscontrols {
 
                         scope.internalOptions.push(angular.copy(element));
 
-                        if (element.value == scope.bindingValue) {
+                        if (element.id == scope.bindingValue) {
                             hasValue = true;
                         }
                     }
@@ -58,8 +56,8 @@ namespace mcscontrols {
                 } else if (scope.bindingValue) {
 
                     scope.internalOptions.push({
-                        value: scope.bindingValue,
-                        text: scope.bindingText || scope.bindingValue
+                        id: scope.bindingValue,
+                        name: scope.bindingText || scope.bindingValue
                     });
                 }
             }
@@ -75,8 +73,8 @@ namespace mcscontrols {
                     for (let index = 0; index < scope.internalOptions.length; index++) {
                         const element = scope.internalOptions[index];
 
-                        if (element.value == scope.bindingValue) {
-                            scope.bindingText = element.text;
+                        if (element.id == scope.bindingValue) {
+                            scope.bindingText = element.name;
                             break;
                         }
                     }

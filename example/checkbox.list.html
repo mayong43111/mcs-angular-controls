@@ -80,13 +80,13 @@
 
             app.controller('ExampleController', ['$scope', function ($scope) {
 
-                $scope.normal_val = [{ value: '001', text: '第一个选项' }];
+                $scope.normal_val = [{ id: '001', name: '第一个选项' }];
 
                 $scope.normal_options = [
-                    { value: '001', text: '第一个选项' },
-                    { value: '002', text: '第二个选项' },
-                    { value: '003', text: '第三个选项' },
-                    { value: '004', text: '第四个选项' },
+                    { id: '001', name: '第一个选项' },
+                    { id: '002', name: '第二个选项' },
+                    { id: '003', name: '第三个选项' },
+                    { id: '004', name: '第四个选项' },
                 ];
 
                 $scope.changgeOptions = function () {
@@ -94,11 +94,11 @@
                     $scope.normal_options = $scope.readonly_options;
                 };
 
-                $scope.readonly_val = [{ value: '001', text: '第一个选项' }, { value: '002', text: '第二个选项' }];
+                $scope.readonly_val = [{ id: '001', name: '第一个选项' }, { id: '002', name: '第二个选项' }];
 
                 $scope.readonly_options = [
-                    { value: '001', text: '第一个选项' },
-                    { value: '003', text: '第三个选项' }
+                    { id: '001', name: '第一个选项' },
+                    { id: '003', name: '第三个选项' }
                 ];
             }]);
 

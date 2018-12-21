@@ -1,5 +1,5 @@
 <span>
-    <select class="form-control" ng-if="!readonly" ng-model="$parent.bindingValue" ng-options="option.value as option.text for option in $parent.internalOptions">
+    <select class="form-control" ng-if="!readonly" ng-model="$parent.bindingValue" ng-options="option.id as option.name for option in $parent.internalOptions">
     </select>
     <span ng-if="readonly">{{bindingText || bindingValue}}</span>
 </span>
