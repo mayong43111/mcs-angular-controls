@@ -1,0 +1,10 @@
+<span>
+    <input type="text" class="form-control" style="text-align: right;" ng-if="!readonly && !unit" ng-model="$parent.bindingText"
+        ng-blur="$parent.setValue($parent.bindingText)" ng-keyup="$parent.keyup()" />
+    <div class="input-group" ng-if="!readonly && unit">
+        <input type="text" class="form-control" style="text-align: right;" ng-model="$parent.bindingText" ng-blur="$parent.setValue($parent.bindingText)"
+            ng-keyup="$parent.keyup()" />
+        <div class="input-group-addon">{{$parent.unit}}</div>
+    </div>
+    <span ng-if="readonly">{{bindingText}}</span><span ng-if="readonly && unit">{{$parent.unit}}</span>
+</span>

@@ -11,6 +11,8 @@ $templateCache.put("templates/mcs.input.checkbox.html","<input type=\"checkbox\"
 
 $templateCache.put("templates/mcs.input.date.html","<span><div ng-if=\"!readonly\" class=\"input-group date form_datetime\"><input class=\"form-control\" type=\"text\" readonly=\"readonly\"> <span class=\"input-group-addon\"><span class=\"glyphicon glyphicon-remove\"></span></span> <span class=\"input-group-addon\"><span class=\"glyphicon glyphicon-th\"></span></span></div><span ng-if=\"readonly\">{{bindingValue | date: options.readonlyFormat }}</span></span>")
 
+$templateCache.put("templates/mcs.input.number.html","<span><input type=\"text\" class=\"form-control\" style=\"text-align: right;\" ng-if=\"!readonly && !unit\" ng-model=\"$parent.bindingText\" ng-blur=\"$parent.setValue($parent.bindingText)\" ng-keyup=\"$parent.keyup()\"><div class=\"input-group\" ng-if=\"!readonly && unit\"><input type=\"text\" class=\"form-control\" style=\"text-align: right;\" ng-model=\"$parent.bindingText\" ng-blur=\"$parent.setValue($parent.bindingText)\" ng-keyup=\"$parent.keyup()\"><div class=\"input-group-addon\">{{$parent.unit}}</div></div><span ng-if=\"readonly\">{{bindingText}}</span><span ng-if=\"readonly && unit\">{{$parent.unit}}</span></span>")
+
 $templateCache.put("templates/mcs.input.text.html","<span><input type=\"text\" ng-if=\"!readonly\" class=\"form-control\" ng-model=\"$parent.bindingValue\"> <span ng-if=\"readonly\">{{bindingValue}}</span></span>")
 
 $templateCache.put("templates/mcs.input.textarea.html","<span><textarea ng-if=\"!readonly\" class=\"form-control\" rows=\"3\" ng-trim=\"false\" ng-model=\"$parent.bindingValue\"></textarea><pre ng-if=\"readonly\" class=\"textarea-readonly\">{{bindingValue}}</pre></span>")

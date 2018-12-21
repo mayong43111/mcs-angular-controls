@@ -104,7 +104,8 @@ var mcscontrols;
         'mcs.contols.modal',
         'mcs.contols.table.pagination',
         'mcs.contols.input.date',
-        'mcs.contols.input.textarea'
+        'mcs.contols.input.textarea',
+        'mcs.contols.input.number'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -208,6 +209,92 @@ var mcscontrols;
     }());
     var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
+    var $NumberControlDirective = /** @class */ (function () {
+        function $NumberControlDirective() {
+            var _this = this;
+            this.templateUrl = 'templates/mcs.input.number.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                unit: '=',
+                precision: '=',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', function ($scope) {
+                    $scope.setValue = function (newValue) {
+                        newValue = _this.removeComma(newValue);
+                        if (newValue) {
+                            newValue = Number(newValue);
+                            if ($scope.precision && Number($scope.precision) > 0) {
+                                newValue = newValue.toFixed(Number($scope.precision));
+                            }
+                        }
+                        $scope.bindingValue = newValue;
+                        $scope.bindingText = _this.addComma($scope.bindingValue);
+                    };
+                    $scope.keyup = function () {
+                        $scope.bindingText = $scope.bindingText.replace(/[^\d+-\.]/g, '');
+                    };
+                    $scope.$watch('bindingValue', function (newValue, oldValue, scope) {
+                        scope.setValue(newValue);
+                    });
+                }];
+            this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+            };
+            this.addComma = function (number) {
+                if (number === 0)
+                    return 0;
+                var num = number + '';
+                num = num.replace(new RegExp(',', 'g'), '');
+                // 正负号处理   
+                var symble = '';
+                if (/^([-+]).*$/.test(num)) {
+                    symble = num.replace(/^([-+]).*$/, '$1');
+                    num = num.replace(/^([-+])(.*)$/, '$2');
+                }
+                if (/^[0-9]+(\.[0-9]+)?$/.test(num)) {
+                    num = num.replace(new RegExp('^[0]+', 'g'), '');
+                    if (/^\./.test(num)) {
+                        num = '0' + num;
+                    }
+                    var decimal = num.replace(/^[0-9]+(\.[0-9]+)?$/, '$1');
+                    var integer = num.replace(/^([0-9]+)(\.[0-9]+)?$/, '$1');
+                    var re = /(\d+)(\d{3})/;
+                    while (re.test(integer)) {
+                        integer = integer.replace(re, '$1,$2');
+                    }
+                    return symble + integer + decimal;
+                }
+                else {
+                    return number;
+                }
+            };
+            this.removeComma = function (number) {
+                var num = number + '';
+                num = num.replace(new RegExp(',', 'g'), '');
+                if (/^[-+]?[0-9]+(\.[0-9]+)?$/.test(num)) {
+                    return num;
+                }
+                else {
+                    return number;
+                }
+            };
+        }
+        $NumberControlDirective.factory = function () {
+            var directive = function () { return new $NumberControlDirective(); };
+            //directive.$inject = [];
+            return directive;
+        };
+        return $NumberControlDirective;
+    }());
+    var inputNumber = angular.module('mcs.contols.input.number', ['mcs.controls.templates']);
+    inputNumber.directive('mcsInputNumber', $NumberControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
