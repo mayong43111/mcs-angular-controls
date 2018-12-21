@@ -24,6 +24,10 @@ namespace mcscontrols {
         currentPageIndex: number;
         currentPageSize: number;
         currentTotalCount: number;
+        readonly: boolean;
+        bindingValue: any | Array<any>;
+
+        selected: (item: any) => void;
     }
 
     interface Pagination {
@@ -39,7 +43,9 @@ namespace mcscontrols {
     }
 
     interface ITableInfo {
+        container: JQLite,
         table: JQLite,
+        thead: JQLite,
         tBody: JQLite,
         tfoot: JQLite,
         columnsCount: number,
@@ -59,6 +65,11 @@ namespace mcscontrols {
             var pagination: Pagination = {
                 pageIndex: 0,
                 pageSize: options.pageSize || 20
+            }
+
+            $scope.selected = function (item: any) {
+
+                $scope.bindingValue = item;
             }
 
             this.loadPaginationData(pagination, options).then(data => {
@@ -135,17 +146,29 @@ namespace mcscontrols {
 
         template = (tElement: JQLite, tAttrs: ng.IAttributes): string => {
 
-            let tableInfo = this.getTableInfo(tElement);
-            this.initializePagination(tableInfo);
+            let tableInfo = this.initializTableInfo(tElement);
+
+            this.initializHead(tableInfo);
             this.initializeBody(tableInfo);
 
-            tElement.removeAttr('mcs-table-pagination');
-            return tElement[0].outerHTML;
+            this.initializPagination(tableInfo);
+
+            this.initializAllCheckbox(tableInfo);
+
+            return tableInfo.container[0].outerHTML;
         };
 
-        private getTableInfo(instanceElement: JQLite): ITableInfo {
+        private initializTableInfo(instanceElement: JQLite): ITableInfo {
 
-            var tbody = instanceElement.find('tbody');
+            var container = angular.element('<div></div>');
+            //container.addClass('table-responsive');
+
+            var table = instanceElement.clone();
+            table.removeAttr('mcs-table-pagination');
+
+            container.append(table);
+
+            var tbody = table.find('tbody');
             if (tbody.length != 1) throw 'Tables can only have one tbody;'
 
             var tbodyTemplete = tbody.find('tr');
@@ -160,11 +183,53 @@ namespace mcscontrols {
             }
 
             return {
-                table: instanceElement,
+                container: container,
+                table: table,
+                thead: table.find('thead'),
                 tBody: tbody,
-                tfoot: instanceElement.find('tfoot'),
+                tfoot: table.find('tfoot'),
                 columnsCount: columnsCount,
             };
+        }
+
+        private initializAllCheckbox(tableInfo: ITableInfo): void {
+
+            var theadCheckbox = this.renderCheckbox(tableInfo.thead);
+            var tBodyCheckbox = this.renderCheckbox(tableInfo.tBody);
+            var tfootCheckbox = this.renderCheckbox(tableInfo.tfoot);
+
+            this.bindingItemCheckbox(tBodyCheckbox);
+        }
+
+        private bindingItemCheckbox(checkbox: JQLite | undefined) {
+
+            if (!checkbox) return;
+
+            checkbox.attr('ng-click', 'selected(item, $event)');
+        }
+
+        private renderCheckbox(element: JQLite): JQLite | undefined {
+
+            var tr = element.find('tr');
+
+            if (tr.length > 0) {
+
+                var td = angular.element('<th></th>');
+                var checkbox = angular.element('<input type="checkbox" ng-disabled="readonly" />');
+                td.append(checkbox);
+
+                td.attr('rowspan', tr.length);
+
+                angular.element(tr[0]).prepend(td);
+
+                return checkbox;
+            }
+
+            return undefined;
+        }
+
+        private initializHead(tableInfo: ITableInfo) {
+
         }
 
         private initializeBody(tableInfo: ITableInfo) {
@@ -181,23 +246,11 @@ namespace mcscontrols {
             }
         }
 
-        private initializePagination(tableInfo: ITableInfo): void {
-
-            var tfoot = tableInfo.tfoot;
-
-            if (tfoot.length == 0) {
-                tfoot = angular.element('<tfoot></tfoot>')
-                tableInfo.table.append(tfoot);
-            }
+        private initializPagination(tableInfo: ITableInfo): void {
 
             var paginationTemplate = <string>this.$templateCache.get('templates/mcs.table.pagination.html');
-            var paginationTD = angular.element('<td></td>').append(paginationTemplate);
-            paginationTD.attr('colspan', tableInfo.columnsCount);
 
-            var paginationTR = angular.element('<tr></tr>');
-            paginationTR.append(paginationTD);
-
-            tfoot.append(paginationTR)
+            tableInfo.container.append(paginationTemplate)
         }
     }
 

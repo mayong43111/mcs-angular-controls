@@ -13,7 +13,7 @@ angular.element(document).ready(function () {
         $scope.dictionaries = {};
         $scope.dictionaries.cooperationTypes = [
             { value: '001', text: '第一种合作' },
-            { value: '002', text: '第二种合作' },
+            { value: '002', text: '第二种合作' }
         ];
     }]);
 

@@ -105,7 +105,8 @@ var mcscontrols;
         'mcs.contols.table.pagination',
         'mcs.contols.input.date',
         'mcs.contols.input.textarea',
-        'mcs.contols.input.number'
+        'mcs.contols.input.number',
+        'mcs.contols.input.modal'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -209,6 +210,75 @@ var mcscontrols;
     }());
     var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
+    var GridController = /** @class */ (function () {
+        function GridController($scope) {
+            this.loadPaginationData = function (pagination, params) {
+                return {
+                    pageIndex: pagination.pageIndex,
+                    pageSize: pagination.pageSize,
+                    totalCount: 500,
+                    data: [
+                        { id: pagination.pageIndex + '001', text: '的第一孩子', },
+                        { id: pagination.pageIndex + '002', text: '的第二孩子', },
+                        { id: pagination.pageIndex + '003', text: '的第三孩子', }
+                    ]
+                };
+            };
+            $scope.gridOptions = {
+                adapter: {
+                    loadPaginationData: this.loadPaginationData
+                },
+            };
+        }
+        GridController.$inject = ['$scope'];
+        return GridController;
+    }());
+    var $InputModalControlDirective = /** @class */ (function () {
+        function $InputModalControlDirective() {
+            var _this = this;
+            this.defaultOptions = {
+                templateUrl: 'templates/mcs.input.modal.open.html',
+                Controller: GridController
+            };
+            this.templateUrl = 'templates/mcs.input.modal.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                optionsName: '@mcsInputModal',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', '$templateCache', 'modalService', function ($scope, $templateCache, modalService) {
+                    if (!$scope.bindingValue || $scope.bindingValue.constructor != Array) {
+                        $scope.bindingValue = [];
+                    }
+                    var options = angular.extend({}, _this.defaultOptions, $scope.$eval($scope.optionsName));
+                    $scope.open = function () {
+                        modalService.open({
+                            title: '请选择...',
+                            template: $templateCache.get(options.templateUrl),
+                            data: { options: options, value: $scope.bindingValue },
+                            controller: options.Controller
+                        }).then(function (data) {
+                            $scope.bindingValue = data;
+                        });
+                    };
+                }];
+        }
+        $InputModalControlDirective.factory = function () {
+            var directive = function () { return new $InputModalControlDirective(); };
+            //directive.$inject = [];
+            return directive;
+        };
+        return $InputModalControlDirective;
+    }());
+    var inputModal = angular.module('mcs.contols.input.modal', ['mcs.controls.templates']);
+    inputModal.directive('mcsInputModal', $InputModalControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
@@ -597,6 +667,8 @@ var mcscontrols;
                             var hasValue = false;
                             for (var index = 0; index < scope.bindingOptions.length; index++) {
                                 var element = scope.bindingOptions[index];
+                                if (!element)
+                                    continue; //IE8
                                 scope.internalOptions.push(angular.copy(element));
                                 if (element.value == scope.bindingValue) {
                                     hasValue = true;
@@ -655,6 +727,9 @@ var mcscontrols;
                 pageIndex: 0,
                 pageSize: options.pageSize || 20
             };
+            $scope.selected = function (item) {
+                $scope.bindingValue = item;
+            };
             this.loadPaginationData(pagination, options).then(function (data) {
                 _this.initializeScope(data, $scope);
             });
@@ -704,11 +779,12 @@ var mcscontrols;
             };
             this.controller = $TablePaginationController;
             this.template = function (tElement, tAttrs) {
-                var tableInfo = _this.getTableInfo(tElement);
-                _this.initializePagination(tableInfo);
+                var tableInfo = _this.initializTableInfo(tElement);
+                _this.initializHead(tableInfo);
                 _this.initializeBody(tableInfo);
-                tElement.removeAttr('mcs-table-pagination');
-                return tElement[0].outerHTML;
+                _this.initializPagination(tableInfo);
+                _this.initializAllCheckbox(tableInfo);
+                return tableInfo.container[0].outerHTML;
             };
         }
         $TablePaginationDirective.factory = function () {
@@ -716,8 +792,13 @@ var mcscontrols;
             directive.$inject = ['$templateCache', '$compile'];
             return directive;
         };
-        $TablePaginationDirective.prototype.getTableInfo = function (instanceElement) {
-            var tbody = instanceElement.find('tbody');
+        $TablePaginationDirective.prototype.initializTableInfo = function (instanceElement) {
+            var container = angular.element('<div></div>');
+            //container.addClass('table-responsive');
+            var table = instanceElement.clone();
+            table.removeAttr('mcs-table-pagination');
+            container.append(table);
+            var tbody = table.find('tbody');
             if (tbody.length != 1)
                 throw 'Tables can only have one tbody;';
             var tbodyTemplete = tbody.find('tr');
@@ -729,11 +810,38 @@ var mcscontrols;
                 columnsCount += (Number(element.getAttribute('colspan')) || 1);
             }
             return {
-                table: instanceElement,
+                container: container,
+                table: table,
+                thead: table.find('thead'),
                 tBody: tbody,
-                tfoot: instanceElement.find('tfoot'),
+                tfoot: table.find('tfoot'),
                 columnsCount: columnsCount,
             };
+        };
+        $TablePaginationDirective.prototype.initializAllCheckbox = function (tableInfo) {
+            var theadCheckbox = this.renderCheckbox(tableInfo.thead);
+            var tBodyCheckbox = this.renderCheckbox(tableInfo.tBody);
+            var tfootCheckbox = this.renderCheckbox(tableInfo.tfoot);
+            this.bindingItemCheckbox(tBodyCheckbox);
+        };
+        $TablePaginationDirective.prototype.bindingItemCheckbox = function (checkbox) {
+            if (!checkbox)
+                return;
+            checkbox.attr('ng-click', 'selected(item, $event)');
+        };
+        $TablePaginationDirective.prototype.renderCheckbox = function (element) {
+            var tr = element.find('tr');
+            if (tr.length > 0) {
+                var td = angular.element('<th></th>');
+                var checkbox = angular.element('<input type="checkbox" ng-disabled="readonly" />');
+                td.append(checkbox);
+                td.attr('rowspan', tr.length);
+                angular.element(tr[0]).prepend(td);
+                return checkbox;
+            }
+            return undefined;
+        };
+        $TablePaginationDirective.prototype.initializHead = function (tableInfo) {
         };
         $TablePaginationDirective.prototype.initializeBody = function (tableInfo) {
             var tBoydTR = tableInfo.tBody.find('tr');
@@ -745,18 +853,9 @@ var mcscontrols;
                 tBoydTR[tBoydTR.length - 1].setAttribute('ng-repeat-end', '');
             }
         };
-        $TablePaginationDirective.prototype.initializePagination = function (tableInfo) {
-            var tfoot = tableInfo.tfoot;
-            if (tfoot.length == 0) {
-                tfoot = angular.element('<tfoot></tfoot>');
-                tableInfo.table.append(tfoot);
-            }
+        $TablePaginationDirective.prototype.initializPagination = function (tableInfo) {
             var paginationTemplate = this.$templateCache.get('templates/mcs.table.pagination.html');
-            var paginationTD = angular.element('<td></td>').append(paginationTemplate);
-            paginationTD.attr('colspan', tableInfo.columnsCount);
-            var paginationTR = angular.element('<tr></tr>');
-            paginationTR.append(paginationTD);
-            tfoot.append(paginationTR);
+            tableInfo.container.append(paginationTemplate);
         };
         return $TablePaginationDirective;
     }());

@@ -42,6 +42,8 @@ namespace mcscontrols {
                     for (let index = 0; index < scope.bindingOptions.length; index++) {
 
                         const element = scope.bindingOptions[index];
+                        if (!element) continue; //IE8
+
                         scope.internalOptions.push(angular.copy(element));
 
                         if (element.value == scope.bindingValue) {
