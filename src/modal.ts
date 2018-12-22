@@ -7,7 +7,7 @@ namespace mcscontrols {
         className?: string;
         template?: string;
         templateUrl?: string;
-        controller?: (...args: any[]) => ng.IController;
+        controller?: any;
     }
 
     interface IModalScope extends ng.IScope {
@@ -96,9 +96,21 @@ namespace mcscontrols {
             return this.open({
                 title: title || this.getDefautTitle(level),
                 data: content,
+                controller: ['$scope', function ($scope: any) { $scope.closed = $scope.submitted }],
                 size: ModalSize.sm,
                 className: this.getClassName(level),
                 template: this.$templateCache.get('templates/mcs.modal.alert.html')
+            });
+        }
+
+        confirm(content: string, title?: string, level?: ModalLevel): ng.IPromise<any> {
+
+            return this.open({
+                title: title || this.getDefautTitle(level),
+                data: content,
+                size: ModalSize.sm,
+                className: this.getClassName(level),
+                template: this.$templateCache.get('templates/mcs.modal.confirm.html')
             });
         }
 

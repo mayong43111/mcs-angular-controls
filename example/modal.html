@@ -43,7 +43,20 @@
         </div>
 
         <div class="panel panel-default">
-            <div class="panel-heading">自定义</div>
+            <div class="panel-heading">Confirm</div>
+            <div class="panel-body">
+                <p><input mcs-input-text binding-value="info_content" /></p>
+                <div class="btn-group">
+                    <button class="btn btn-default" ng-click="sendMessage2(info_content,0)">发送（消息）</button>
+                    <button class="btn btn-default" ng-click="sendMessage2(info_content,1)">发送（成功）</button>
+                    <button class="btn btn-default" ng-click="sendMessage2(info_content,2)">发送（警告）</button>
+                    <button class="btn btn-default" ng-click="sendMessage2(info_content,3)">发送（错误）</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Custom</div>
             <div class="panel-body">
                 <p>{{testData.email}}</p>
                 <p>{{testData.password}}</p>
@@ -72,6 +85,11 @@
                 $scope.sendMessage = function (content, level) {
 
                     modalService.alert(content, '测试', level).then(function () { toastrService.send('确定了。') });
+                }
+
+                $scope.sendMessage2 = function (content, level) {
+
+                    modalService.confirm(content, null, level).then(function () { toastrService.send('确定了。') });
                 }
 
                 $scope.testData = { email: 'test@example.com' };

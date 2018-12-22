@@ -23,7 +23,9 @@ $templateCache.put("templates/mcs.input.text.html","<span><input type=\"text\" n
 
 $templateCache.put("templates/mcs.input.textarea.html","<span><textarea ng-if=\"!readonly\" class=\"form-control\" rows=\"3\" ng-trim=\"false\" ng-model=\"$parent.bindingValue\"></textarea><pre ng-if=\"readonly\" class=\"textarea-readonly\">{{bindingValue}}</pre></span>")
 
-$templateCache.put("templates/mcs.modal.alert.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"closed()\">确定</button></div>")
+$templateCache.put("templates/mcs.modal.alert.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"submitted(true)\">确定</button></div>")
+
+$templateCache.put("templates/mcs.modal.confirm.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-default\" ng-click=\"closed()\">取消</button> <button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"submitted(true)\">确定</button></div>")
 
 $templateCache.put("templates/mcs.modal.html","<div class=\"modal fade in {{className}}\" tabindex=\"-1\" style=\"display: block; padding-right: 16px;\"><div class=\"modal-dialog modal-{{sizeClassName}}\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" ng-click=\"closed()\"><span aria-hidden=\"true\">×</span></button><h4 class=\"modal-title\">{{title}}</h4></div><div class=\"modal-body\"></div></div></div></div><div class=\"modal-backdrop fade in\"></div>")
 

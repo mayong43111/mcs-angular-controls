@@ -548,9 +548,19 @@ var mcscontrols;
             return this.open({
                 title: title || this.getDefautTitle(level),
                 data: content,
+                controller: ['$scope', function ($scope) { $scope.closed = $scope.submitted; }],
                 size: ModalSize.sm,
                 className: this.getClassName(level),
                 template: this.$templateCache.get('templates/mcs.modal.alert.html')
+            });
+        };
+        $ModalService.prototype.confirm = function (content, title, level) {
+            return this.open({
+                title: title || this.getDefautTitle(level),
+                data: content,
+                size: ModalSize.sm,
+                className: this.getClassName(level),
+                template: this.$templateCache.get('templates/mcs.modal.confirm.html')
             });
         };
         $ModalService.prototype.loadModalBody = function (options) {
