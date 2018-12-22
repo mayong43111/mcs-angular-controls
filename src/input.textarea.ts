@@ -49,7 +49,7 @@ namespace mcscontrols {
                     textarea = instanceElement.find('textarea')[0];
                     textarea.style['overflow-y'] = 'hidden';
                     textarea.style['word-break'] = 'break-all';
-                    textarea.style['resize'] = 'none';
+                    textarea.style['resize'] = 'vertical';
                     textarea.scrollTop = 0;
                     initHeight = textarea.scrollHeight;
 

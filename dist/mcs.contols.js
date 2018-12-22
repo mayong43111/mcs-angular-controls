@@ -422,7 +422,7 @@ var mcscontrols;
                         textarea = instanceElement.find('textarea')[0];
                         textarea.style['overflow-y'] = 'hidden';
                         textarea.style['word-break'] = 'break-all';
-                        textarea.style['resize'] = 'none';
+                        textarea.style['resize'] = 'vertical';
                         textarea.scrollTop = 0;
                         initHeight = textarea.scrollHeight;
                         autoHeight();
@@ -1131,6 +1131,7 @@ var mcscontrols;
                 allowEdit: typeof (treeNode.allowEdit) == 'undefined' ? this._options.edit.allowEdit : treeNode.allowEdit,
             };
             if (target.children && target.children.constructor == Array) {
+                result.loaded = true;
                 result.children = this.convertViewModels(target.children, level);
             }
             return result;
@@ -1145,7 +1146,7 @@ var mcscontrols;
             this.$scope = $scope;
             $scope.expand = function () {
                 $scope.item.open = !$scope.item.open;
-                if (!$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
+                if ($scope.item.open && !$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
                     _this.internalRenderChildren($scope);
                 }
             };
@@ -1158,6 +1159,7 @@ var mcscontrols;
         }
         $TreeNodeController.prototype.internalRenderChildren = function ($scope) {
             $scope.rootController.loadChildrenTreeNode($scope.item).then(function (data) {
+                $scope.nodeContainer.html('');
                 for (var index = 0; index < data.length; index++) {
                     var element = data[index];
                     $scope.rootController.renderTreeNode($scope.nodeContainer, $scope, element);

@@ -222,6 +222,7 @@ namespace mcscontrols {
                     var children = this.convertViewModels(<Array<TreeNode>>loadChildren, treeNode.level);
                     treeNode.children = children;
                     treeNode.loaded = true;
+
                     defer.resolve(treeNode.children);
                 }
             }
@@ -272,10 +273,10 @@ namespace mcscontrols {
             var result: Array<TreeNodeViewModel> = [];
 
             for (let index = 0; index < treeNodes.length; index++) {
+
                 const element = treeNodes[index];
 
                 var newVm = this.convertViewModel(element, level);
-
                 if (newVm) result.push(newVm);
             }
 
@@ -305,6 +306,7 @@ namespace mcscontrols {
 
             if (target.children && target.children.constructor == Array) {
 
+                result.loaded = true;
                 result.children = this.convertViewModels(target.children, level);
             }
 
@@ -334,7 +336,7 @@ namespace mcscontrols {
 
                 $scope.item.open = !$scope.item.open;
 
-                if (!$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
+                if ($scope.item.open && !$scope.item.loaded && $scope.item.type == TreeNodeType.folder) {
 
                     this.internalRenderChildren($scope);
                 }
@@ -353,6 +355,8 @@ namespace mcscontrols {
         private internalRenderChildren($scope: ITreeNodeControlScope) {
 
             $scope.rootController.loadChildrenTreeNode($scope.item).then(data => {
+
+                $scope.nodeContainer.html('');
 
                 for (let index = 0; index < data.length; index++) {
 
