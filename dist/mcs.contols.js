@@ -106,7 +106,8 @@ var mcscontrols;
         'mcs.contols.input.date',
         'mcs.contols.input.textarea',
         'mcs.contols.input.number',
-        'mcs.contols.input.modal'
+        'mcs.contols.input.modal',
+        'mcs.contols.input.file'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -210,6 +211,244 @@ var mcscontrols;
     }());
     var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
+    var FileController = /** @class */ (function () {
+        function FileController($scope, $timeout, toastrService) {
+            var _this = this;
+            this.$scope = $scope;
+            this.toastrService = toastrService;
+            //更新进度条
+            this.updateTotalProgress = function () {
+                var loaded = 0, total = 0, 
+                //spans = $progress.children(),
+                percent;
+                // $.each(percentages, function (k, v) {
+                //     total += v[0];
+                //     loaded += v[0] * v[1];
+                // });
+                // percent = total ? loaded / total : 0;
+                // spans.eq(0).text(Math.round(percent * 100) + '%');
+                // spans.eq(1).css('width', Math.round(percent * 100) + '%');
+                // updateStatus();
+            };
+            this.setState = function (val) {
+                var file, stats;
+                if (val === _this.currentState) {
+                    return;
+                }
+                // $upload.removeClass('state-' + state);
+                // $upload.addClass('state-' + val);
+                _this.currentState = val;
+                switch (_this.currentState) {
+                    case 'pedding':
+                        //$placeHolder.removeClass('element-invisible');
+                        //$queue.parent().removeClass('filled');
+                        //$queue.hide();
+                        //$statusBar.addClass('element-invisible');
+                        _this.uploader.refresh();
+                        break;
+                    case 'ready':
+                        // $placeHolder.addClass('element-invisible');
+                        // $('#filePicker2').removeClass('element-invisible');
+                        // $queue.parent().addClass('filled');
+                        // $queue.show();
+                        // $statusBar.removeClass('element-invisible');
+                        _this.uploader.refresh();
+                        break;
+                    // case 'uploading':
+                    //     $('#filePicker2').addClass('element-invisible');
+                    //     $progress.show();
+                    //     $upload.text('暂停上传');
+                    //     break;
+                    // case 'paused':
+                    //     $progress.show();
+                    //     $upload.text('继续上传');
+                    //     break;
+                    // case 'confirm':
+                    //     $progress.hide();
+                    //     $upload.text('开始上传').addClass('disabled');
+                    //     stats = uploader.getStats();
+                    //     if (stats.successNum && !stats.uploadFailNum) {
+                    //         setState('finish');
+                    //         return;
+                    //     }
+                    //     break;
+                    // case 'finish':
+                    //     stats = uploader.getStats();
+                    //     if (stats.successNum) {
+                    //         alert('上传成功');
+                    //     } else {
+                    //         // 没有成功的图片，重设
+                    //         state = 'done';
+                    //         location.reload();
+                    //     }
+                    //     break;
+                }
+                // updateStatus();
+            };
+            // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
+            this.addFile = function (file) {
+                _this.$scope.$apply(function (scope) {
+                    //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
+                    scope.files.push({ id: file.id, name: file.name });
+                });
+            };
+            // 负责文件的销毁, 要区分已有的文件和新增的文件
+            this.removeFile = function (fileID) {
+                _this.uploader.removeFile({ id: fileID });
+            };
+            this.initializeUploader = function () {
+                var $wrap = _this.$scope.container, 
+                // 附件容器
+                $queue = $wrap.find('.filelist'), 
+                // 状态栏，包括进度和控制按钮
+                $statusBar = $wrap.find('.statusBar'), 
+                // 文件总体选择信息。
+                $info = $statusBar.find('.info'), 
+                // 上传按钮
+                $upload = $wrap.find('.uploadBtn'), 
+                // 没选择文件之前的内容。
+                $placeHolder = $wrap.find('.placeholder'), 
+                // 总体进度条
+                $progress = $statusBar.find('.progress');
+                _this.uploader = WebUploader.create({
+                    pick: {
+                        id: _this.$scope.container.find('.filePicker'),
+                        label: '点击选择附件'
+                    },
+                    dnd: _this.$scope.container.find('.queueList'),
+                    paste: document.body,
+                    accept: {
+                        title: 'Images',
+                        extensions: 'gif,jpg,jpeg,bmp,png',
+                        mimeTypes: 'image/*'
+                    },
+                    // swf文件路径
+                    swf: '/js/Uploader.swf',
+                    disableGlobalDnd: true,
+                    chunked: true,
+                    server: 'http://2betop.net/fileupload.php',
+                    fileNumLimit: 300,
+                    fileSizeLimit: 5 * 1024 * 1024,
+                    fileSingleSizeLimit: 1 * 1024 * 1024 // 50 M
+                });
+                // 添加“添加文件”的按钮，
+                _this.uploader.addButton({
+                    id: _this.$scope.container.find('.filePicker2'),
+                    label: '继续添加'
+                });
+                _this.uploader.onUploadProgress = function (file, percentage) {
+                    // var $li = $('#' + file.id),
+                    //     $percent = $li.find('.progress span');
+                    // $percent.css('width', percentage * 100 + '%');
+                    // percentages[file.id][1] = percentage;
+                    // updateTotalProgress();
+                };
+                _this.uploader.onFileQueued = function (file) {
+                    _this.$scope.$apply(function (scope) {
+                        scope.fileCount++;
+                        scope.fileSize += file.size;
+                    });
+                    if (_this.$scope.fileCount === 1) {
+                        //$placeHolder.addClass('element-invisible');
+                        //$statusBar.show();
+                    }
+                    _this.addFile(file);
+                    _this.setState('ready');
+                    // updateTotalProgress();
+                };
+                _this.uploader.onFileDequeued = function (file) {
+                    this.$scope.$apply(function (scope) {
+                        scope.fileCount--;
+                        scope.fileSize -= file.size;
+                    });
+                    // if (!fileCount) {
+                    //     setState('pedding');
+                    // }
+                    // removeFile(file);
+                    // updateTotalProgress();
+                };
+                _this.uploader.on('all', function (type) {
+                    var stats;
+                    switch (type) {
+                        case 'uploadFinished':
+                            _this.setState('confirm');
+                            break;
+                        case 'startUpload':
+                            _this.setState('uploading');
+                            break;
+                        case 'stopUpload':
+                            _this.setState('paused');
+                            break;
+                    }
+                });
+                _this.uploader.onError = function (code) {
+                    _this.toastrService.send('Eroor: ' + code, '出错了 :(', 3);
+                };
+            };
+            this.currentState = 'pedding';
+            var closedFunc = $scope.closed;
+            $scope.closed = function () {
+                if (_this.uploader)
+                    _this.uploader.destroy();
+                closedFunc();
+            };
+            var submittedFunc = $scope.submitted;
+            $scope.submitted = function (data) {
+                if (_this.uploader)
+                    _this.uploader.destroy();
+                submittedFunc(data);
+            };
+            // 添加的文件数量（未上传的，上传后会减掉）
+            $scope.fileCount = 0; //TODO: 前天目前用这个判读显示模式，其实不对，而是已有文件+新选的文件>0
+            // 添加的文件总大小（未上传的，上传后会减掉）
+            $scope.fileSize = 0;
+            $scope.files = [];
+            $scope.removeFile = this.removeFile;
+            $timeout(function () { return _this.initializeUploader(); });
+        }
+        FileController.$inject = ['$scope', '$timeout', 'toastrService'];
+        return FileController;
+    }());
+    var $FileControlDirective = /** @class */ (function () {
+        function $FileControlDirective() {
+            var _this = this;
+            this.defaultOptions = {};
+            this.templateUrl = 'templates/mcs.input.file.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                optionsName: '@mcsInputFile',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', 'modalService', function ($scope, modalService) {
+                    var options = angular.extend({}, _this.defaultOptions, $scope.$eval($scope.optionsName));
+                    $scope.open = function () {
+                        modalService.open({
+                            title: '附件上传...',
+                            templateUrl: 'templates/mcs.input.file.modal.html',
+                            data: { options: options, value: $scope.bindingValue },
+                            controller: FileController
+                        }).then(function (data) {
+                            $scope.bindingValue = data;
+                        });
+                    };
+                }];
+        }
+        $FileControlDirective.factory = function () {
+            var directive = function () { return new $FileControlDirective(); };
+            //directive.$inject = [];
+            return directive;
+        };
+        return $FileControlDirective;
+    }());
+    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates']);
+    inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
@@ -524,6 +763,7 @@ var mcscontrols;
                     newScope.$destroy();
                 };
                 var newScope = _this.$rootScope.$new();
+                newScope.container = body;
                 newScope.data = angular.copy(options.data);
                 newScope.title = options.title || 'Info';
                 newScope.sizeClassName = _this.getSizeClassName(options.size);

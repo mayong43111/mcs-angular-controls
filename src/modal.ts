@@ -12,6 +12,7 @@ namespace mcscontrols {
 
     interface IModalScope extends ng.IScope {
 
+        container:JQLite;
         title: string;
         data: any;
         sizeClassName: string;
@@ -63,6 +64,7 @@ namespace mcscontrols {
                 };
 
                 var newScope = this.$rootScope.$new() as IModalScope;
+                newScope.container = body;
                 newScope.data = angular.copy(options.data);
                 newScope.title = options.title || 'Info';
                 newScope.sizeClassName = this.getSizeClassName(options.size);

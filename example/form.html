@@ -11,6 +11,7 @@
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css" rel="stylesheet">
+    <link href="../plugins/webuploader/webuploader.css" rel="stylesheet">
     <link href="../dist/mcs.controls.css" rel="stylesheet">
     <link href="./css/form.css" rel="stylesheet">
 
@@ -417,48 +418,48 @@
                             <td width="25%" style="text-align:left;">
                                 <label class="control-label">1.全景计划节点及期量（2018版）V2.0-成果审批附件</label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file1" />
                             </td>
                         </tr>
                         <tr>
                             <td width="25%" style="text-align:left;">
                                 <label class="control-label">2.项目经营启动会关键决策点表v4.0 </label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file2" />
                             </td>
                         </tr>
                         <tr>
                             <td width="25%" style="text-align:left;">
                                 <label class="control-label">3.项目目标货值详细-成果审批附件</label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file3" />
                             </td>
                         </tr>
                         <tr>
                             <td width="25%" style="text-align:left;">
                                 <label class="control-label">4.经营启动会会议纪要</label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file4" />
                             </td>
                         </tr>
                         <tr>
                             <td width="25%" style="text-align:left;">
-                                <label class="control-label">5.正荣地产项目经营启动会v4.0</label>
+                                5.正荣地产项目经营启动会v4.0</label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file5" />
                             </td>
                         </tr>
                         <tr>
                             <td width="25%" style="text-align:left;">
                                 <label class="control-label">6.正荣地产项目经营启动会预备会v4.0（前期小组会用）</label>
                             </td>
-                            <td width="75%" colspan="3">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                            <td width="75%">
+                                <input mcs-input-file binding-value="formData.file6" />
                             </td>
                         </tr>
                     </tbody>
@@ -473,6 +474,7 @@
     <script src="../node_modules/angular/angular.js"></script>
     <script src="../plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
     <script src="../plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script src="../plugins/webuploader/webuploader.nolog.js"></script>
     <script src="../dist/templates.js"></script>
     <script src="../dist/mcs.contols.js"></script>
     <script src="./js/form.js"></script>
