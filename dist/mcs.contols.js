@@ -238,12 +238,51 @@ var mcscontrols;
         GridController.$inject = ['$scope'];
         return GridController;
     }());
+    var TreeController = /** @class */ (function () {
+        function TreeController($scope) {
+            this.loadChildren = function (parentID) {
+                return [
+                    { id: parentID + '001', name: parentID + '的第一孩子', },
+                    { id: parentID + '002', name: parentID + '的第二孩子', },
+                    { id: parentID + '003', name: parentID + '的第三孩子', }
+                ];
+            };
+            $scope.treeOptions = {
+                adapter: {
+                    loadChildren: this.loadChildren
+                },
+                data: {
+                    id: '001',
+                    name: '第一级节点',
+                    loaded: true,
+                    open: true,
+                    children: [
+                        { id: '001001', name: '第二级节点01' },
+                        { id: '001002', name: '第二级节点02', loaded: true, },
+                        { id: '001003', name: '第二级节点03', loaded: true, children: [] },
+                        {
+                            id: '001004', name: '第二级节点04', loaded: true, open: true,
+                            children: [
+                                { id: '001004001', name: '第三级节点01' }
+                            ]
+                        },
+                    ]
+                }
+            };
+        }
+        TreeController.$inject = ['$scope'];
+        return TreeController;
+    }());
     var $InputModalControlDirective = /** @class */ (function () {
         function $InputModalControlDirective() {
             var _this = this;
+            this.modeDefine = {
+                'table': { templateUrl: 'templates/mcs.input.modal.table.html', controller: GridController },
+                'tree': { templateUrl: 'templates/mcs.input.modal.tree.html', controller: TreeController },
+                'custom': { templateUrl: null, controller: null }
+            };
             this.defaultOptions = {
-                templateUrl: 'templates/mcs.input.modal.open.html',
-                Controller: GridController
+                mode: 'custom',
             };
             this.templateUrl = 'templates/mcs.input.modal.html';
             this.restrict = 'A';
@@ -258,12 +297,15 @@ var mcscontrols;
                         $scope.bindingValue = [];
                     }
                     var options = angular.extend({}, _this.defaultOptions, $scope.$eval($scope.optionsName));
+                    var modeDefine = _this.modeDefine[options.mode];
+                    options.templateUrl = options.templateUrl || modeDefine.templateUrl;
+                    options.controller = options.controller || modeDefine.controller;
                     $scope.open = function () {
                         modalService.open({
                             title: '请选择...',
-                            template: $templateCache.get(options.templateUrl),
+                            templateUrl: options.templateUrl,
                             data: { options: options, value: $scope.bindingValue },
-                            controller: options.Controller
+                            controller: options.controller
                         }).then(function (data) {
                             $scope.bindingValue = data;
                         });
@@ -518,10 +560,16 @@ var mcscontrols;
                 defer.resolve(angular.element(options.template));
             }
             else if (options.templateUrl) {
-                this.$http.get(options.templateUrl).then(function (response) {
-                    var template = response.data;
+                var template = this.$templateCache.get(options.templateUrl);
+                if (template) {
                     defer.resolve(angular.element(template));
-                }, function (reason) { _this.toastrService.send('HTTP获取页面', '出错了 :(', 3); });
+                }
+                else {
+                    this.$http.get(options.templateUrl).then(function (response) {
+                        var template = response.data;
+                        defer.resolve(angular.element(template));
+                    }, function (reason) { _this.toastrService.send('HTTP获取页面', '出错了 :(', 3); });
+                }
             }
             else {
                 throw 'must need template or templateUrl';

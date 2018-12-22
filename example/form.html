@@ -11,6 +11,7 @@
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css" rel="stylesheet">
+    <link href="../dist/mcs.controls.css" rel="stylesheet">
     <link href="./css/form.css" rel="stylesheet">
 
     <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
@@ -57,7 +58,7 @@
                                 <label class="control-label">申请人</label>
                             </td>
                             <td width="35%">
-                                <input mcs-ogu-selector binding-value="formData.applicant" />
+                                <input mcs-input-modal="{ mode: 'tree' }" mcs-readonly="normal_readonly" binding-value="formData.applicant" />
                             </td>
                             <td width="15%" style="text-align:right;">
                                 <label class="control-label">申请时间</label>
@@ -71,7 +72,7 @@
                                 <label class="control-label">项目</label>
                             </td>
                             <td width="35%">
-                                <input type="text" class="form-control" placeholder="所在公司">
+                                <input mcs-input-modal="{ mode: 'table' }" mcs-readonly="normal_readonly" binding-value="formData.project" />
                             </td>
                             <td width="15%" style="text-align:right;">
                                 <label class="control-label">拿地时间</label>

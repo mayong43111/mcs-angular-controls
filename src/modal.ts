@@ -111,14 +111,22 @@ namespace mcscontrols {
                 defer.resolve(angular.element(options.template));
             } else if (options.templateUrl) {
 
-                this.$http.get<string>(options.templateUrl).then(
+                var template = this.$templateCache.get(options.templateUrl);
 
-                    response => {
-                        var template = response.data;
-                        defer.resolve(angular.element(template));
-                    },
-                    reason => { this.toastrService.send('HTTP获取页面', '出错了 :(', 3) }
-                );
+                if (template) {
+
+                    defer.resolve(angular.element(<string>template));
+                } else {
+
+                    this.$http.get<string>(options.templateUrl).then(
+
+                        response => {
+                            var template = response.data;
+                            defer.resolve(angular.element(template));
+                        },
+                        reason => { this.toastrService.send('HTTP获取页面', '出错了 :(', 3) }
+                    );
+                }
             } else {
                 throw 'must need template or templateUrl';
             }

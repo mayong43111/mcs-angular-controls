@@ -28,6 +28,46 @@ namespace mcscontrols {
         };
     }
 
+    class TreeController {
+
+        static $inject = ['$scope'];
+
+        constructor($scope: any) {
+
+            $scope.treeOptions = {
+                adapter: {
+                    loadChildren: this.loadChildren
+                },
+                data: {
+                    id: '001',
+                    name: '第一级节点',
+                    loaded: true,
+                    open: true,
+                    children: [
+                        { id: '001001', name: '第二级节点01' },
+                        { id: '001002', name: '第二级节点02', loaded: true, },
+                        { id: '001003', name: '第二级节点03', loaded: true, children: [] },
+                        {
+                            id: '001004', name: '第二级节点04', loaded: true, open: true,
+                            children: [
+                                { id: '001004001', name: '第三级节点01' }
+                            ]
+                        },
+                    ]
+                }
+            };
+        }
+
+        private loadChildren = function (parentID: string) {
+
+            return [
+                { id: parentID + '001', name: parentID + '的第一孩子', },
+                { id: parentID + '002', name: parentID + '的第二孩子', },
+                { id: parentID + '003', name: parentID + '的第三孩子', }
+            ];
+        };
+    }
+
     class $InputModalControlDirective implements ng.IDirective {
 
         static factory(): ng.IDirectiveFactory {
@@ -37,9 +77,14 @@ namespace mcscontrols {
             return directive;
         }
 
+        private modeDefine: { [key: string]: any; } = {
+            'table': { templateUrl: 'templates/mcs.input.modal.table.html', controller: GridController },
+            'tree': { templateUrl: 'templates/mcs.input.modal.tree.html', controller: TreeController },
+            'custom': { templateUrl: null, controller: null }
+        }
+
         private defaultOptions = {
-            templateUrl: 'templates/mcs.input.modal.open.html',
-            Controller: GridController
+            mode: 'custom',
         };
 
         constructor() {
@@ -62,13 +107,17 @@ namespace mcscontrols {
 
             var options = angular.extend({}, this.defaultOptions, $scope.$eval($scope.optionsName));
 
+            let modeDefine = this.modeDefine[options.mode];
+            options.templateUrl = options.templateUrl || modeDefine.templateUrl;
+            options.controller = options.controller || modeDefine.controller
+
             $scope.open = () => {
 
                 modalService.open({
                     title: '请选择...',
-                    template: $templateCache.get(options.templateUrl),
+                    templateUrl: options.templateUrl,
                     data: { options: options, value: $scope.bindingValue },
-                    controller: options.Controller
+                    controller: options.controller
                 }).then(function (data: any) {
 
                     $scope.bindingValue = data;

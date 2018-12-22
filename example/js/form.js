@@ -12,8 +12,8 @@ angular.element(document).ready(function () {
 
         $scope.dictionaries = {};
         $scope.dictionaries.cooperationTypes = [
-            { value: '001', text: '第一种合作' },
-            { value: '002', text: '第二种合作' }
+            { id: '001', name: '第一种合作' },
+            { id: '002', name: '第二种合作' }
         ];
     }]);
 

@@ -30,17 +30,32 @@
     <div class="container">
 
         <div class="panel panel-default">
-            <div class="panel-heading">Normal <input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
+            <div class="panel-heading">Normal Table<input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
             <div class="panel-body">
-                <p><input mcs-input-modal mcs-readonly="normal_readonly" binding-value="normal_val" /></p>
+                <p><input mcs-input-modal="{ mode: 'table'}" mcs-readonly="normal_readonly" binding-value="normal_val" /></p>
                 <p>Result: {{normal_val}}</p>
             </div>
         </div>
 
         <div class="panel panel-default">
-            <div class="panel-heading">Readonly</div>
+            <div class="panel-heading">Readonly Table</div>
             <div class="panel-body">
                 <p><input mcs-input-modal mcs-readonly="true" binding-value="normal_val" /></p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Normal Tree<input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
+            <div class="panel-body">
+                <p><input mcs-input-modal="{ mode: 'tree'}" mcs-readonly="normal_readonly" binding-value="normal_val2" /></p>
+                <p>Result: {{normal_val2}}</p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Readonly Tree</div>
+            <div class="panel-body">
+                <p><input mcs-input-modal mcs-readonly="true" binding-value="normal_val2" /></p>
             </div>
         </div>
     </div>
