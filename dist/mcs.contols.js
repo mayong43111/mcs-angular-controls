@@ -333,7 +333,7 @@ var mcscontrols;
             };
             // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
             this.addFile = function (file) {
-                var pfile = { id: file.id, name: file.name, uploaderFile: file };
+                var pfile = { id: file.id, name: file.name, loaded: false };
                 _this.$scope.$apply(function (scope) {
                     //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
                     scope.files.push(pfile);
@@ -377,8 +377,8 @@ var mcscontrols;
                         break;
                     }
                 }
-                if (file.uploaderFile) {
-                    _this.uploader.removeFile(file.uploaderFile);
+                if (!file.loaded) { //loaded： true 是从数据库加载，false 是客户端
+                    _this.uploader.removeFile(file.id);
                 }
             };
             this.upload = function () {

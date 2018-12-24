@@ -94,7 +94,7 @@ namespace mcscontrols {
         // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
         private addFile = (file: any) => {
 
-            var pfile: any = { id: file.id, name: file.name, uploaderFile: file };
+            var pfile: any = { id: file.id, name: file.name, loaded: false };
 
             this.$scope.$apply(function (scope: any) {
 
@@ -154,8 +154,8 @@ namespace mcscontrols {
                 }
             }
 
-            if (file.uploaderFile) {
-                this.uploader.removeFile(file.uploaderFile);
+            if (!file.loaded) { //loaded： true 是从数据库加载，false 是客户端
+                this.uploader.removeFile(file.id);
             }
         }
 
