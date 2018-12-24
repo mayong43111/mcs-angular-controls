@@ -4,8 +4,6 @@ namespace mcscontrols {
 
     class FileController {
 
-        static $inject = ['$scope', '$timeout', 'toastrService'];
-
         //当前附件控件的状态 pedding, ready, uploading, confirm, done.
         private currentState: string;
         private uploader: any;
@@ -58,37 +56,36 @@ namespace mcscontrols {
                     this.uploader.refresh();
                     break;
 
-                // case 'uploading':
-                //     $('#filePicker2').addClass('element-invisible');
-                //     $progress.show();
-                //     $upload.text('暂停上传');
-                //     break;
+                case 'uploading':
+                    //$('#filePicker2').addClass('element-invisible');
+                    //$progress.show();
+                    //$upload.text('暂停上传');
+                    break;
 
-                // case 'paused':
-                //     $progress.show();
-                //     $upload.text('继续上传');
-                //     break;
+                case 'paused':
+                    //$progress.show();
+                    //$upload.text('继续上传');
+                    break;
 
-                // case 'confirm':
-                //     $progress.hide();
-                //     $upload.text('开始上传').addClass('disabled');
+                case 'confirm':
+                    //$progress.hide();
+                    //$upload.text('开始上传').addClass('disabled');
 
-                //     stats = uploader.getStats();
-                //     if (stats.successNum && !stats.uploadFailNum) {
-                //         setState('finish');
-                //         return;
-                //     }
-                //     break;
-                // case 'finish':
-                //     stats = uploader.getStats();
-                //     if (stats.successNum) {
-                //         alert('上传成功');
-                //     } else {
-                //         // 没有成功的图片，重设
-                //         state = 'done';
-                //         location.reload();
-                //     }
-                //     break;
+                    stats = this.uploader.getStats();
+                    if (stats.successNum && !stats.uploadFailNum) {
+                        this.setState('finish');
+                        return;
+                    }
+                    break;
+                case 'finish':
+                    stats = this.uploader.getStats();
+                    if (stats.successNum) {
+                        this.toastrService.send('上传成功', ':)', 1);
+                    } else {
+                        // 没有成功的图片，重设
+                        this.currentState = 'done';
+                    }
+                    break;
             }
 
             // updateStatus();
@@ -97,17 +94,85 @@ namespace mcscontrols {
         // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
         private addFile = (file: any) => {
 
+            var pfile: any = { id: file.id, name: file.name, uploaderFile: file };
+
             this.$scope.$apply(function (scope: any) {
 
                 //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
-                scope.files.push({ id: file.id, name: file.name });
+                scope.files.push(pfile);
+            });
+
+            let showError = (code: string) => {
+
+                var message: String;
+
+                switch (code) {
+                    case 'exceed_size':
+                        message = '文件大小超出';
+                        break;
+
+                    case 'interrupt':
+                        message = '上传暂停';
+                        break;
+
+                    default:
+                        message = '上传失败，请重试';
+                        break;
+                }
+
+                this.$scope.$apply(function (scope: any) {
+
+                    pfile.isError = true;
+                    pfile.errorMessage = message;
+                });
+            };
+
+            file.on('statuschange', function (cur: any, prev: any) {
+
+                if (cur === 'error' || cur === 'invalid') {
+                    console.log(file.statusText);
+                    showError(file.statusText);
+                    // percentages[file.id][1] = 1;
+                } else if (cur === 'interrupt') {
+                    showError('interrupt');
+                }
             });
         }
 
         // 负责文件的销毁, 要区分已有的文件和新增的文件
-        private removeFile = (fileID: string) => {
+        private removeFile = (file: any) => {
 
-            this.uploader.removeFile({ id: fileID });
+            //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
+            for (var i = 0; i < this.$scope.files.length; i++) {
+
+                var element = this.$scope.files[i];
+
+                if (element.id == file.id) {
+
+                    this.$scope.files.splice(i, 1);
+                    break;
+                }
+            }
+
+            if (file.uploaderFile) {
+                this.uploader.removeFile(file.uploaderFile);
+            }
+        }
+
+        private upload = () => {
+
+            switch (this.currentState) {
+                case 'ready':
+                    this.uploader.upload();
+                    break;
+                case 'paused':
+                    this.uploader.upload();
+                    break;
+                case 'uploading':
+                    this.uploader.stop();
+                    break;
+
+            }
         }
 
         private initializeUploader = () => {
@@ -134,14 +199,8 @@ namespace mcscontrols {
                 dnd: this.$scope.container.find('.queueList'),
                 paste: document.body,
 
-                accept: {
-                    title: 'Images',
-                    extensions: 'gif,jpg,jpeg,bmp,png',
-                    mimeTypes: 'image/*'
-                },
-
                 // swf文件路径
-                swf: '/js/Uploader.swf',
+                swf: this.configurationBroker.getAppSetting('uploader.swfUrl'),
 
                 disableGlobalDnd: true,
 
@@ -185,14 +244,10 @@ namespace mcscontrols {
                 // updateTotalProgress();
             };
 
-            this.uploader.onFileDequeued = function (file: any) {
+            this.uploader.onFileDequeued = (file: any) => {
 
-                this.$scope.$apply(function (scope: any) {
-
-                    scope.fileCount--;
-                    scope.fileSize -= file.size;
-                });
-
+                this.$scope.fileCount--;
+                this.$scope.fileSize -= file.size;
                 // if (!fileCount) {
                 //     setState('pedding');
                 // }
@@ -223,7 +278,13 @@ namespace mcscontrols {
             };
         }
 
-        constructor(private $scope: any, $timeout: ng.ITimeoutService, private toastrService: any) {
+        static $inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker'];
+
+        constructor(
+            private $scope: any,
+            $timeout: ng.ITimeoutService,
+            private toastrService: any,
+            private configurationBroker: any) {
 
             this.currentState = 'pedding';
 
@@ -249,6 +310,7 @@ namespace mcscontrols {
             $scope.files = [];
 
             $scope.removeFile = this.removeFile;
+            $scope.upload = this.upload;
 
             $timeout(() => this.initializeUploader());
         }
@@ -295,6 +357,6 @@ namespace mcscontrols {
         }];
     }
 
-    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates']);
+    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates', 'mcs.contols.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 }

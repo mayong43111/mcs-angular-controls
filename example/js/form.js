@@ -2,6 +2,13 @@ angular.element(document).ready(function () {
 
     var app = angular.module('app', ['mcs.contols']);
 
+    app.config(['configurationBrokerProvider', function (configurationBroker) {
+
+        configurationBroker.initialize({
+            'uploader.swfUrl': '/plugins/webuploader/Uploader.swf'
+        });
+    }]);
+
     app.controller('FormController', ['$scope', function ($scope) {
 
         $scope.formData = {};

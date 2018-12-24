@@ -241,6 +241,10 @@
     z-index: 300;
 }
 
+.file-uploader .filelist a:hover div.file-panel {
+    height: 30px;
+}
+
 .file-uploader .filelist div.file-panel span {
     width: 24px;
     height: 24px;

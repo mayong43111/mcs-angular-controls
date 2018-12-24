@@ -15,6 +15,7 @@ namespace mcscontrols {
         'mcs.contols.input.textarea',
         'mcs.contols.input.number',
         'mcs.contols.input.modal',
-        'mcs.contols.input.file'
+        'mcs.contols.input.file',
+        'mcs.contols.configurationBroker'
     ]);
 }

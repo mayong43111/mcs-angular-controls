@@ -7,12 +7,15 @@
         </div>
         <ul class="filelist">
             <li ng-repeat="file in files">
-                <p class="title">{{file.name}}</p>
-                <p class="imgWrap"></p>
-                <p class="progress"><span></span></p>
-                <div class="file-panel">
-                    <span class="cancel" ng-click="removeFile(file.id)">删除</span>
-                </div>
+                <a class="file">
+                    <p class="title">{{file.name}}</p>
+                    <p class="imgWrap"></p>
+                    <p class="progress"><span style="display: none; width: 0px;"></span></p>
+                    <p class="error" ng-if="file.isError">{{file.errorMessage}}</p>
+                    <div class="file-panel">
+                        <span class="cancel" ng-click="removeFile(file)">删除</span>
+                    </div>
+                </a>
             </li>
         </ul>
     </div>
@@ -25,7 +28,7 @@
         <div class="btns">
             <div class="filePicker2 webuploader-container">
             </div>
-            <div class="uploadBtn state-pedding">开始上传</div>
+            <div class="uploadBtn state-pedding" ng-click="upload()">开始上传</div>
         </div>
     </div>
 </div>

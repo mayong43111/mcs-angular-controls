@@ -92,6 +92,45 @@ var mcscontrols;
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var ConfigurationBroker = /** @class */ (function () {
+        function ConfigurationBroker() {
+            this.configuration = {};
+        }
+        ConfigurationBroker.prototype.getConfig = function () {
+            return this.configuration;
+        };
+        ConfigurationBroker.prototype.getAppSetting = function (key) {
+            return this.getConfig()[key];
+        };
+        ConfigurationBroker.prototype.mergeConfigString = function (target) {
+            this.mergeConfig(angular.fromJson(target));
+        };
+        ConfigurationBroker.prototype.mergeConfig = function (target) {
+            return angular.extend(this.configuration, target);
+        };
+        return ConfigurationBroker;
+    }());
+    var ConfigurationProvider = /** @class */ (function () {
+        function ConfigurationProvider() {
+            this.configurationBroker = new ConfigurationBroker();
+        }
+        ConfigurationProvider.prototype.initialize = function (config) {
+            this.configurationBroker.mergeConfig(config);
+        };
+        ;
+        ConfigurationProvider.prototype.$get = function () {
+            return this.configurationBroker;
+        };
+        ConfigurationProvider.$inject = [];
+        return ConfigurationProvider;
+    }());
+    var configurationBroker = angular.module('mcs.contols.configurationBroker', []);
+    configurationBroker.provider('configurationBroker', ConfigurationProvider);
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
     angular.module('mcs.contols', [
         'mcs.controls.templates',
         'mcs.contols.input.text',
@@ -107,7 +146,8 @@ var mcscontrols;
         'mcs.contols.input.textarea',
         'mcs.contols.input.number',
         'mcs.contols.input.modal',
-        'mcs.contols.input.file'
+        'mcs.contols.input.file',
+        'mcs.contols.configurationBroker'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -217,10 +257,11 @@ var mcscontrols;
 var mcscontrols;
 (function (mcscontrols) {
     var FileController = /** @class */ (function () {
-        function FileController($scope, $timeout, toastrService) {
+        function FileController($scope, $timeout, toastrService, configurationBroker) {
             var _this = this;
             this.$scope = $scope;
             this.toastrService = toastrService;
+            this.configurationBroker = configurationBroker;
             //更新进度条
             this.updateTotalProgress = function () {
                 var loaded = 0, total = 0, 
@@ -259,47 +300,99 @@ var mcscontrols;
                         // $statusBar.removeClass('element-invisible');
                         _this.uploader.refresh();
                         break;
-                    // case 'uploading':
-                    //     $('#filePicker2').addClass('element-invisible');
-                    //     $progress.show();
-                    //     $upload.text('暂停上传');
-                    //     break;
-                    // case 'paused':
-                    //     $progress.show();
-                    //     $upload.text('继续上传');
-                    //     break;
-                    // case 'confirm':
-                    //     $progress.hide();
-                    //     $upload.text('开始上传').addClass('disabled');
-                    //     stats = uploader.getStats();
-                    //     if (stats.successNum && !stats.uploadFailNum) {
-                    //         setState('finish');
-                    //         return;
-                    //     }
-                    //     break;
-                    // case 'finish':
-                    //     stats = uploader.getStats();
-                    //     if (stats.successNum) {
-                    //         alert('上传成功');
-                    //     } else {
-                    //         // 没有成功的图片，重设
-                    //         state = 'done';
-                    //         location.reload();
-                    //     }
-                    //     break;
+                    case 'uploading':
+                        //$('#filePicker2').addClass('element-invisible');
+                        //$progress.show();
+                        //$upload.text('暂停上传');
+                        break;
+                    case 'paused':
+                        //$progress.show();
+                        //$upload.text('继续上传');
+                        break;
+                    case 'confirm':
+                        //$progress.hide();
+                        //$upload.text('开始上传').addClass('disabled');
+                        stats = _this.uploader.getStats();
+                        if (stats.successNum && !stats.uploadFailNum) {
+                            _this.setState('finish');
+                            return;
+                        }
+                        break;
+                    case 'finish':
+                        stats = _this.uploader.getStats();
+                        if (stats.successNum) {
+                            _this.toastrService.send('上传成功', ':)', 1);
+                        }
+                        else {
+                            // 没有成功的图片，重设
+                            _this.currentState = 'done';
+                        }
+                        break;
                 }
                 // updateStatus();
             };
             // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
             this.addFile = function (file) {
+                var pfile = { id: file.id, name: file.name, uploaderFile: file };
                 _this.$scope.$apply(function (scope) {
                     //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
-                    scope.files.push({ id: file.id, name: file.name });
+                    scope.files.push(pfile);
+                });
+                var showError = function (code) {
+                    var message;
+                    switch (code) {
+                        case 'exceed_size':
+                            message = '文件大小超出';
+                            break;
+                        case 'interrupt':
+                            message = '上传暂停';
+                            break;
+                        default:
+                            message = '上传失败，请重试';
+                            break;
+                    }
+                    _this.$scope.$apply(function (scope) {
+                        pfile.isError = true;
+                        pfile.errorMessage = message;
+                    });
+                };
+                file.on('statuschange', function (cur, prev) {
+                    if (cur === 'error' || cur === 'invalid') {
+                        console.log(file.statusText);
+                        showError(file.statusText);
+                        // percentages[file.id][1] = 1;
+                    }
+                    else if (cur === 'interrupt') {
+                        showError('interrupt');
+                    }
                 });
             };
             // 负责文件的销毁, 要区分已有的文件和新增的文件
-            this.removeFile = function (fileID) {
-                _this.uploader.removeFile({ id: fileID });
+            this.removeFile = function (file) {
+                //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
+                for (var i = 0; i < _this.$scope.files.length; i++) {
+                    var element = _this.$scope.files[i];
+                    if (element.id == file.id) {
+                        _this.$scope.files.splice(i, 1);
+                        break;
+                    }
+                }
+                if (file.uploaderFile) {
+                    _this.uploader.removeFile(file.uploaderFile);
+                }
+            };
+            this.upload = function () {
+                switch (_this.currentState) {
+                    case 'ready':
+                        _this.uploader.upload();
+                        break;
+                    case 'paused':
+                        _this.uploader.upload();
+                        break;
+                    case 'uploading':
+                        _this.uploader.stop();
+                        break;
+                }
             };
             this.initializeUploader = function () {
                 var $wrap = _this.$scope.container, 
@@ -322,13 +415,8 @@ var mcscontrols;
                     },
                     dnd: _this.$scope.container.find('.queueList'),
                     paste: document.body,
-                    accept: {
-                        title: 'Images',
-                        extensions: 'gif,jpg,jpeg,bmp,png',
-                        mimeTypes: 'image/*'
-                    },
                     // swf文件路径
-                    swf: '/js/Uploader.swf',
+                    swf: _this.configurationBroker.getAppSetting('uploader.swfUrl'),
                     disableGlobalDnd: true,
                     chunked: true,
                     server: 'http://2betop.net/fileupload.php',
@@ -362,10 +450,8 @@ var mcscontrols;
                     // updateTotalProgress();
                 };
                 _this.uploader.onFileDequeued = function (file) {
-                    this.$scope.$apply(function (scope) {
-                        scope.fileCount--;
-                        scope.fileSize -= file.size;
-                    });
+                    _this.$scope.fileCount--;
+                    _this.$scope.fileSize -= file.size;
                     // if (!fileCount) {
                     //     setState('pedding');
                     // }
@@ -409,9 +495,10 @@ var mcscontrols;
             $scope.fileSize = 0;
             $scope.files = [];
             $scope.removeFile = this.removeFile;
+            $scope.upload = this.upload;
             $timeout(function () { return _this.initializeUploader(); });
         }
-        FileController.$inject = ['$scope', '$timeout', 'toastrService'];
+        FileController.$inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker'];
         return FileController;
     }());
     var $FileControlDirective = /** @class */ (function () {
@@ -447,7 +534,7 @@ var mcscontrols;
         };
         return $FileControlDirective;
     }());
-    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates']);
+    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates', 'mcs.contols.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
