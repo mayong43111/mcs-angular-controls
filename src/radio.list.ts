@@ -97,6 +97,6 @@ namespace mcscontrols {
         }];
     }
 
-    var radiolist = angular.module('mcs.contols.radiolist', ['mcs.controls.templates']);
+    var radiolist = angular.module('mcs.controls.radiolist', ['mcs.controls.templates']);
     radiolist.directive('mcsRadioList', $RadiokboxListControlDirective.factory());
 }

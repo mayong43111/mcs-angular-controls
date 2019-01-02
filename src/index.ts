@@ -1,21 +1,21 @@
 namespace mcscontrols {
 
-    angular.module('mcs.contols', [
+    angular.module('mcs.controls', [
         'mcs.controls.templates',
-        'mcs.contols.input.text',
-        'mcs.contols.select',
-        'mcs.contols.input.checkbox',
-        'mcs.contols.checkboxlist',
-        'mcs.contols.radiolist',
-        'mcs.contols.toastr',
-        'mcs.contols.tree',
-        'mcs.contols.modal',
-        'mcs.contols.table.pagination',
-        'mcs.contols.input.date',
-        'mcs.contols.input.textarea',
-        'mcs.contols.input.number',
-        'mcs.contols.input.modal',
-        'mcs.contols.input.file',
-        'mcs.contols.configurationBroker'
+        'mcs.controls.input.text',
+        'mcs.controls.select',
+        'mcs.controls.input.checkbox',
+        'mcs.controls.checkboxlist',
+        'mcs.controls.radiolist',
+        'mcs.controls.toastr',
+        'mcs.controls.tree',
+        'mcs.controls.modal',
+        'mcs.controls.table.pagination',
+        'mcs.controls.input.date',
+        'mcs.controls.input.textarea',
+        'mcs.controls.input.number',
+        'mcs.controls.input.modal',
+        'mcs.controls.input.file',
+        'mcs.controls.configurationBroker'
     ]);
 }

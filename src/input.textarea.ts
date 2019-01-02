@@ -66,6 +66,6 @@ namespace mcscontrols {
         }
     }
 
-    var inputText = angular.module('mcs.contols.input.textarea', ['mcs.controls.templates']);
+    var inputText = angular.module('mcs.controls.input.textarea', ['mcs.controls.templates']);
     inputText.directive('mcsInputTextarea', $TextareaControlDirective.factory());
 }

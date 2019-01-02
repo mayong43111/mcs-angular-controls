@@ -85,7 +85,7 @@ var mcscontrols;
         };
         return $CheckboxListControlDirective;
     }());
-    var checkboxlist = angular.module('mcs.contols.checkboxlist', ['mcs.controls.templates']);
+    var checkboxlist = angular.module('mcs.controls.checkboxlist', ['mcs.controls.templates']);
     checkboxlist.directive('mcsCheckboxList', $CheckboxListControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -124,30 +124,30 @@ var mcscontrols;
         ConfigurationProvider.$inject = [];
         return ConfigurationProvider;
     }());
-    var configurationBroker = angular.module('mcs.contols.configurationBroker', []);
+    var configurationBroker = angular.module('mcs.controls.configurationBroker', []);
     configurationBroker.provider('configurationBroker', ConfigurationProvider);
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
-    angular.module('mcs.contols', [
+    angular.module('mcs.controls', [
         'mcs.controls.templates',
-        'mcs.contols.input.text',
-        'mcs.contols.select',
-        'mcs.contols.input.checkbox',
-        'mcs.contols.checkboxlist',
-        'mcs.contols.radiolist',
-        'mcs.contols.toastr',
-        'mcs.contols.tree',
-        'mcs.contols.modal',
-        'mcs.contols.table.pagination',
-        'mcs.contols.input.date',
-        'mcs.contols.input.textarea',
-        'mcs.contols.input.number',
-        'mcs.contols.input.modal',
-        'mcs.contols.input.file',
-        'mcs.contols.configurationBroker'
+        'mcs.controls.input.text',
+        'mcs.controls.select',
+        'mcs.controls.input.checkbox',
+        'mcs.controls.checkboxlist',
+        'mcs.controls.radiolist',
+        'mcs.controls.toastr',
+        'mcs.controls.tree',
+        'mcs.controls.modal',
+        'mcs.controls.table.pagination',
+        'mcs.controls.input.date',
+        'mcs.controls.input.textarea',
+        'mcs.controls.input.number',
+        'mcs.controls.input.modal',
+        'mcs.controls.input.file',
+        'mcs.controls.configurationBroker'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -187,7 +187,7 @@ var mcscontrols;
         };
         return $CheckboxControlDirective;
     }());
-    var checkbox = angular.module('mcs.contols.input.checkbox', ['mcs.controls.templates']);
+    var checkbox = angular.module('mcs.controls.input.checkbox', ['mcs.controls.templates']);
     checkbox.directive('mcsInputCheckbox', $CheckboxControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -249,7 +249,7 @@ var mcscontrols;
         };
         return $DateControlDirective;
     }());
-    var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
+    var inputDate = angular.module('mcs.controls.input.date', ['mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -534,7 +534,7 @@ var mcscontrols;
         };
         return $FileControlDirective;
     }());
-    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates', 'mcs.contols.configurationBroker']);
+    var inputTFile = angular.module('mcs.controls.input.file', ['mcs.controls.templates', 'mcs.controls.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -645,7 +645,7 @@ var mcscontrols;
         };
         return $InputModalControlDirective;
     }());
-    var inputModal = angular.module('mcs.contols.input.modal', ['mcs.controls.templates']);
+    var inputModal = angular.module('mcs.controls.input.modal', ['mcs.controls.templates']);
     inputModal.directive('mcsInputModal', $InputModalControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -731,7 +731,7 @@ var mcscontrols;
         };
         return $NumberControlDirective;
     }());
-    var inputNumber = angular.module('mcs.contols.input.number', ['mcs.controls.templates']);
+    var inputNumber = angular.module('mcs.controls.input.number', ['mcs.controls.templates']);
     inputNumber.directive('mcsInputNumber', $NumberControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -757,7 +757,7 @@ var mcscontrols;
         };
         return $TextControlDirective;
     }());
-    var inputText = angular.module('mcs.contols.input.text', ['mcs.controls.templates']);
+    var inputText = angular.module('mcs.controls.input.text', ['mcs.controls.templates']);
     inputText.directive('mcsInputText', $TextControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -810,7 +810,7 @@ var mcscontrols;
         };
         return $TextareaControlDirective;
     }());
-    var inputText = angular.module('mcs.contols.input.textarea', ['mcs.controls.templates']);
+    var inputText = angular.module('mcs.controls.input.textarea', ['mcs.controls.templates']);
     inputText.directive('mcsInputTextarea', $TextareaControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -946,7 +946,7 @@ var mcscontrols;
         $ModalService.$inject = ['$rootScope', '$compile', '$controller', '$http', '$templateCache', '$q', 'toastrService'];
         return $ModalService;
     }());
-    var modal = angular.module('mcs.contols.modal', ['mcs.controls.templates']);
+    var modal = angular.module('mcs.controls.modal', ['mcs.controls.templates']);
     modal.service('modalService', $ModalService);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1023,7 +1023,7 @@ var mcscontrols;
         };
         return $RadiokboxListControlDirective;
     }());
-    var radiolist = angular.module('mcs.contols.radiolist', ['mcs.controls.templates']);
+    var radiolist = angular.module('mcs.controls.radiolist', ['mcs.controls.templates']);
     radiolist.directive('mcsRadioList', $RadiokboxListControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1093,7 +1093,7 @@ var mcscontrols;
         };
         return $SelectControlDirective;
     }());
-    var select = angular.module('mcs.contols.select', ['mcs.controls.templates']);
+    var select = angular.module('mcs.controls.select', ['mcs.controls.templates']);
     select.directive('mcsSelect', $SelectControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1244,7 +1244,7 @@ var mcscontrols;
         };
         return $TablePaginationDirective;
     }());
-    var tablePagination = angular.module('mcs.contols.table.pagination', ['mcs.controls.templates']);
+    var tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates']);
     tablePagination.directive('mcsTablePagination', $TablePaginationDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1339,7 +1339,7 @@ var mcscontrols;
         $ToastrService.$inject = ['$templateCache', '$compile', '$rootScope'];
         return $ToastrService;
     }());
-    var toastr = angular.module('mcs.contols.toastr', ['mcs.controls.templates']);
+    var toastr = angular.module('mcs.controls.toastr', ['mcs.controls.templates']);
     toastr.service('toastrService', $ToastrService);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1576,8 +1576,8 @@ var mcscontrols;
         };
         return $TreeControlDirective;
     }());
-    var tree = angular.module('mcs.contols.tree', ['mcs.controls.templates']);
+    var tree = angular.module('mcs.controls.tree', ['mcs.controls.templates']);
     tree.directive('mcsTree', $TreeControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
-//# sourceMappingURL=mcs.contols.js.map
+//# sourceMappingURL=mcs.controls.js.map

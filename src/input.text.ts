@@ -25,6 +25,6 @@ namespace mcscontrols {
 
     }
 
-    var inputText = angular.module('mcs.contols.input.text', ['mcs.controls.templates']);
+    var inputText = angular.module('mcs.controls.input.text', ['mcs.controls.templates']);
     inputText.directive('mcsInputText', $TextControlDirective.factory());
 }

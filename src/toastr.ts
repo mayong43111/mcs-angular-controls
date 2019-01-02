@@ -134,6 +134,6 @@ namespace mcscontrols {
         }
     }
 
-    const toastr = angular.module('mcs.contols.toastr', ['mcs.controls.templates']);
+    const toastr = angular.module('mcs.controls.toastr', ['mcs.controls.templates']);
     toastr.service('toastrService', $ToastrService);
 }

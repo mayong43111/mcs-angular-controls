@@ -105,6 +105,6 @@ namespace mcscontrols {
         };
     }
 
-    var inputNumber = angular.module('mcs.contols.input.number', ['mcs.controls.templates']);
+    var inputNumber = angular.module('mcs.controls.input.number', ['mcs.controls.templates']);
     inputNumber.directive('mcsInputNumber', $NumberControlDirective.factory());
 }

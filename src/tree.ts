@@ -403,6 +403,6 @@ namespace mcscontrols {
         }
     }
 
-    var tree = angular.module('mcs.contols.tree', ['mcs.controls.templates']);
+    var tree = angular.module('mcs.controls.tree', ['mcs.controls.templates']);
     tree.directive('mcsTree', $TreeControlDirective.factory());
 }

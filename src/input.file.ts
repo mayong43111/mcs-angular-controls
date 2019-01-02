@@ -357,6 +357,6 @@ namespace mcscontrols {
         }];
     }
 
-    var inputTFile = angular.module('mcs.contols.input.file', ['mcs.controls.templates', 'mcs.contols.configurationBroker']);
+    var inputTFile = angular.module('mcs.controls.input.file', ['mcs.controls.templates', 'mcs.controls.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 }

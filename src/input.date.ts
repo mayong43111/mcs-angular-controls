@@ -75,6 +75,6 @@ namespace mcscontrols {
         };
     }
 
-    var inputDate = angular.module('mcs.contols.input.date', ['mcs.controls.templates']);
+    var inputDate = angular.module('mcs.controls.input.date', ['mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
 }

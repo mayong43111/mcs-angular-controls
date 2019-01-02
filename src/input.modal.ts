@@ -126,6 +126,6 @@ namespace mcscontrols {
         }];
     }
 
-    var inputModal = angular.module('mcs.contols.input.modal', ['mcs.controls.templates']);
+    var inputModal = angular.module('mcs.controls.input.modal', ['mcs.controls.templates']);
     inputModal.directive('mcsInputModal', $InputModalControlDirective.factory());
 }

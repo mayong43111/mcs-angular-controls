@@ -41,6 +41,6 @@ namespace mcscontrols {
         }
     }
 
-    var configurationBroker = angular.module('mcs.contols.configurationBroker', []);
+    var configurationBroker = angular.module('mcs.controls.configurationBroker', []);
     configurationBroker.provider('configurationBroker', ConfigurationProvider);
 }

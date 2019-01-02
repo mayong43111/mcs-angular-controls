@@ -83,6 +83,6 @@ namespace mcscontrols {
         }];
     }
 
-    var select = angular.module('mcs.contols.select', ['mcs.controls.templates']);
+    var select = angular.module('mcs.controls.select', ['mcs.controls.templates']);
     select.directive('mcsSelect', $SelectControlDirective.factory());
 }

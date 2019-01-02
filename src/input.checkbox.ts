@@ -42,6 +42,6 @@ namespace mcscontrols {
         }];
     }
 
-    var checkbox = angular.module('mcs.contols.input.checkbox', ['mcs.controls.templates']);
+    var checkbox = angular.module('mcs.controls.input.checkbox', ['mcs.controls.templates']);
     checkbox.directive('mcsInputCheckbox', $CheckboxControlDirective.factory());
 }

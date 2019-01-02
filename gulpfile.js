@@ -28,7 +28,7 @@ gulp.task('ts-build', function () {
     return gulp.src('src/**/*.ts')
         .pipe(sourcemaps.init())
         .pipe(tsProject())
-        .pipe(concat('mcs.contols.js'))
+        .pipe(concat('mcs.controls.js'))
         .pipe(sourcemaps.mapSources(function (sourcePath, file) {
             return '../src/' + sourcePath;
         }))

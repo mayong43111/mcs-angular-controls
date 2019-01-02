@@ -254,6 +254,6 @@ namespace mcscontrols {
         }
     }
 
-    const tablePagination = angular.module('mcs.contols.table.pagination', ['mcs.controls.templates']);
+    const tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates']);
     tablePagination.directive('mcsTablePagination', $TablePaginationDirective.factory());
 }

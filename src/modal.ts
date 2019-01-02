@@ -188,6 +188,6 @@ namespace mcscontrols {
         }
     }
 
-    const modal = angular.module('mcs.contols.modal', ['mcs.controls.templates']);
+    const modal = angular.module('mcs.controls.modal', ['mcs.controls.templates']);
     modal.service('modalService', $ModalService);
 }

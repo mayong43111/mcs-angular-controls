@@ -1,6 +1,6 @@
 angular.element(document).ready(function () {
 
-    var app = angular.module('app', ['mcs.contols']);
+    var app = angular.module('app', ['mcs.controls']);
 
     app.config(['configurationBrokerProvider', function (configurationBroker) {
 

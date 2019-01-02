@@ -117,6 +117,6 @@ namespace mcscontrols {
         }];
     }
 
-    var checkboxlist = angular.module('mcs.contols.checkboxlist', ['mcs.controls.templates']);
+    var checkboxlist = angular.module('mcs.controls.checkboxlist', ['mcs.controls.templates']);
     checkboxlist.directive('mcsCheckboxList', $CheckboxListControlDirective.factory());
 }
