@@ -73,6 +73,7 @@
                     </tbody>
                 </table>
                 <p> Result: {{normal_val}}</p>
+                <p><button class="btn btn-default" ng-click="refresh2()">刷新</button></p>
             </div>
         </div>
     </div>
@@ -116,8 +117,22 @@
                     async: {
                         url: 'http://localhost:51079/XGKWebApp/XGK/api/sample/query',
                         params: { name: '007' }
+                    },
+                    callback: {
+                        onInitiated: function (table) {
+
+                            $scope.tableControl2 = table;
+                        }
                     }
                 };
+
+                $scope.refresh2 = function () {
+
+                    if ($scope.tableControl2) {
+
+                        $scope.tableControl2.refresh();
+                    }
+                }
             }]);
 
             angular.element(document).find('body').attr('ng-controller', 'ExampleController');

@@ -831,7 +831,7 @@ var mcscontrols;
             this.template.addClass('hidden');
         };
         $LoadingService.prototype.start = function () {
-            //一个诡异的问题
+            //一个诡异的问题，也没那么诡异，template的初始化在run中，时序比较晚一些，所以只好再重新来一次
             if (this.template && !this.template[0]) {
                 this.initLoading();
             }
@@ -1178,21 +1178,30 @@ var mcscontrols;
             this.$q = $q;
             this.$http = $http;
             this.toastrService = toastrService;
-            var options = $scope.$parent.$eval($scope.optionsName);
-            if (!options)
+            this.currentOptions = $scope.$parent.$eval($scope.optionsName);
+            if (!this.currentOptions)
                 throw 'Must have options';
-            var pagination = {
+            this.currentPagination = {
                 pageIndex: 0,
-                pageSize: options.pageSize || 20,
+                pageSize: this.currentOptions.pageSize || 20,
                 totalCount: -1
             };
             $scope.selected = function (item) {
                 $scope.bindingValue = item;
             };
-            this.loadPaginationData(pagination, options).then(function (data) {
+            this.loadPaginationData(this.currentPagination, this.currentOptions).then(function (data) {
                 _this.initializeScope(data, $scope);
             });
+            if (this.currentOptions.callback && this.currentOptions.callback.onInitiated) {
+                this.currentOptions.callback.onInitiated(this);
+            }
         }
+        $TablePaginationController.prototype.refresh = function () {
+            var _this = this;
+            this.loadPaginationData(this.currentPagination, this.currentOptions).then(function (data) {
+                _this.initializeScope(data, _this.$scope);
+            });
+        };
         $TablePaginationController.prototype.initializeScope = function (source, $scope) {
             $scope.data = source.pagedData;
             $scope.currentPageIndex = source.pageIndex;

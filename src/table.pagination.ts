@@ -8,8 +8,13 @@ namespace mcscontrols {
 
     interface TablePaginationOption {
         pageSize?: number;
-        adapter: TablePaginationAdapterOption;
-        async: TablePaginationAsyncOptions;
+        adapter?: TablePaginationAdapterOption;
+        async?: TablePaginationAsyncOptions;
+        callback?: TablePaginationCallBackOptions;
+    }
+
+    interface TablePaginationCallBackOptions {
+        onInitiated?: (controller: $TablePaginationController) => void;
     }
 
     interface TablePaginationAsyncOptions {
@@ -58,6 +63,9 @@ namespace mcscontrols {
 
     class $TablePaginationController {
 
+        private currentPagination: Pagination;
+        private currentOptions: TablePaginationOption;
+
         static $inject: Array<string> = ['$scope', '$q', '$http', 'toastrService'];
         constructor(
             private $scope: ITablePaginationScope,
@@ -65,12 +73,12 @@ namespace mcscontrols {
             private $http: ng.IHttpService,
             private toastrService: any
         ) {
-            var options: TablePaginationOption = $scope.$parent.$eval($scope.optionsName);
-            if (!options) throw 'Must have options';
+            this.currentOptions = $scope.$parent.$eval($scope.optionsName);
+            if (!this.currentOptions) throw 'Must have options';
 
-            var pagination: Pagination = {
+            this.currentPagination = {
                 pageIndex: 0,
-                pageSize: options.pageSize || 20,
+                pageSize: this.currentOptions.pageSize || 20,
                 totalCount: -1
             };
 
@@ -79,9 +87,22 @@ namespace mcscontrols {
                 $scope.bindingValue = item;
             }
 
-            this.loadPaginationData(pagination, options).then(data => {
+            this.loadPaginationData(this.currentPagination, this.currentOptions).then(data => {
 
                 this.initializeScope(data, $scope);
+            });
+
+            if (this.currentOptions.callback && this.currentOptions.callback.onInitiated) {
+
+                this.currentOptions.callback.onInitiated(this);
+            }
+        }
+
+        public refresh() {
+
+            this.loadPaginationData(this.currentPagination, this.currentOptions).then(data => {
+
+                this.initializeScope(data, this.$scope);
             });
         }
 
