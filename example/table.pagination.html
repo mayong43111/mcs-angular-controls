@@ -89,16 +89,16 @@
 
             app.controller('ExampleController', ['$scope', 'toastrService', function ($scope, toastrService) {
 
-                var loadPaginationData = function (pagination, params) {
+                var loadPaginationData = function (pagedQueryCriteria) {
 
                     return {
-                        pageIndex: pagination.pageIndex,
-                        pageSize: pagination.pageSize,
+                        pageIndex: pagedQueryCriteria.pageParams.pageIndex,
+                        pageSize: pagedQueryCriteria.pageParams.pageSize,
                         totalCount: 500,
                         pagedData: [
-                            { id: pagination.pageIndex + '001', name: params.name + '的第一孩子', },
-                            { id: pagination.pageIndex + '002', name: params.name + '的第二孩子', },
-                            { id: pagination.pageIndex + '003', name: params.name + '的第三孩子', }
+                            { id: '001', name: pagedQueryCriteria.condition.name + '的第一孩子', },
+                            { id: '002', name: pagedQueryCriteria.condition.name + '的第二孩子', },
+                            { id: '003', name: pagedQueryCriteria.condition.name + '的第三孩子', }
                         ]
                     };
                 };

@@ -1193,12 +1193,15 @@ var mcscontrols;
         $TablePaginationController.prototype.loadPaginationData = function (pagination, options) {
             var _this = this;
             var defer = this.$q.defer();
-            var params = null;
+            var pagedQueryCriteria = { pageParams: pagination };
             if (options.async && options.async.params) {
-                params = options.async.params;
+                pagedQueryCriteria.condition = options.async.params;
+            }
+            if (options.async && options.async.orderBy) {
+                pagedQueryCriteria.orderBy = options.async.orderBy;
             }
             if (options.adapter && options.adapter.loadPaginationData) {
-                var loadData = options.adapter.loadPaginationData(pagination, params);
+                var loadData = options.adapter.loadPaginationData(pagedQueryCriteria);
                 if (this.isIPromise(loadData)) {
                     loadData.then(function (data) {
                         defer.resolve(data);
@@ -1209,7 +1212,7 @@ var mcscontrols;
                 }
             }
             else if (options.async && options.async.url) {
-                this.$http.post(options.async.url, params).then(function (res) {
+                this.$http.post(options.async.url, pagedQueryCriteria).then(function (res) {
                     defer.resolve(res.data);
                 }, function (res) {
                     _this.toastrService.send('HTTP获取失败', '出错了 :(', 3);

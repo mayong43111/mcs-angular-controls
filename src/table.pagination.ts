@@ -1,5 +1,11 @@
 namespace mcscontrols {
 
+    interface PagedQueryCriteria {
+        condition?: any;
+        pageParams?: Pagination;
+        orderBy?: any;
+    }
+
     interface TablePaginationOption {
         pageSize?: number;
         adapter: TablePaginationAdapterOption;
@@ -9,13 +15,14 @@ namespace mcscontrols {
     interface TablePaginationAsyncOptions {
         url: string;
         params: any;
+        orderBy: any;
     }
 
     interface TablePaginationAdapterOption {
 
         loadPaginationData?:
-        ((pagination: Pagination, params: any) => ng.IPromise<PaginationData>)
-        | ((pagination: Pagination, params: any) => PaginationData);
+        ((pagination: PagedQueryCriteria) => ng.IPromise<PaginationData>)
+        | ((pagination: PagedQueryCriteria) => PaginationData);
     }
 
     interface ITablePaginationScope extends ng.IScope {
@@ -90,14 +97,19 @@ namespace mcscontrols {
 
             var defer = this.$q.defer<PaginationData>();
 
-            var params = null;
+            var pagedQueryCriteria: PagedQueryCriteria = { pageParams: pagination };
+
             if (options.async && options.async.params) {
-                params = options.async.params;
+                pagedQueryCriteria.condition = options.async.params;
+            }
+
+            if (options.async && options.async.orderBy) {
+                pagedQueryCriteria.orderBy = options.async.orderBy;
             }
 
             if (options.adapter && options.adapter.loadPaginationData) {
 
-                var loadData = options.adapter.loadPaginationData(pagination, params);
+                var loadData = options.adapter.loadPaginationData(pagedQueryCriteria);
 
                 if (this.isIPromise(loadData)) {
 
@@ -110,7 +122,7 @@ namespace mcscontrols {
                 }
             } else if (options.async && options.async.url) {
 
-                this.$http.post<PaginationData>(options.async.url, params).then(
+                this.$http.post<PaginationData>(options.async.url, pagedQueryCriteria).then(
                     res => {
                         defer.resolve(res.data);
                     },
