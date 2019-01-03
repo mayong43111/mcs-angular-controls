@@ -2,7 +2,7 @@ namespace mcscontrols {
 
     interface PagedQueryCriteria {
         condition?: any;
-        pageParams?: Pagination;
+        pageParams: Pagination;
         orderBy?: any;
     }
 

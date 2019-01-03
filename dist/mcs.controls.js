@@ -822,18 +822,27 @@ var mcscontrols;
         function $LoadingService($rootScope, $templateCache) {
             this.$rootScope = $rootScope;
             this.$templateCache = $templateCache;
+            this.initLoading();
+            this.count = 0;
+        }
+        $LoadingService.prototype.initLoading = function () {
             this.template = angular.element(this.$templateCache.get('templates/mcs.loading.html'));
             angular.element(document).find('body').append(this.template);
             this.template.addClass('hidden');
-            this.count = 0;
-        }
+        };
         $LoadingService.prototype.start = function () {
+            //一个诡异的问题
+            if (this.template && !this.template[0]) {
+                this.initLoading();
+            }
             this.count++;
-            this.template.removeClass('hidden');
+            if (this.template) {
+                this.template.removeClass('hidden');
+            }
         };
         $LoadingService.prototype.stop = function () {
             this.count--;
-            if (this.count <= 0) {
+            if (this.template && this.count <= 0) {
                 this.template.addClass('hidden');
             }
         };
