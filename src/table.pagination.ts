@@ -32,14 +32,12 @@ namespace mcscontrols {
 
     interface Pagination {
         pageIndex: number,
-        pageSize: number
+        pageSize: number,
+        totalCount: number,
     }
 
     interface PaginationData extends Pagination {
-        pageIndex: number,
-        pageSize: number,
-        totalCount: number,
-        data: Array<any>
+        pagedData: Array<any>
     }
 
     interface ITableInfo {
@@ -53,19 +51,21 @@ namespace mcscontrols {
 
     class $TablePaginationController {
 
-        static $inject: Array<string> = ['$scope', '$q', 'toastrService'];
+        static $inject: Array<string> = ['$scope', '$q', '$http', 'toastrService'];
         constructor(
             private $scope: ITablePaginationScope,
             private $q: ng.IQService,
-            toastrService: any
+            private $http: ng.IHttpService,
+            private toastrService: any
         ) {
             var options: TablePaginationOption = $scope.$parent.$eval($scope.optionsName);
             if (!options) throw 'Must have options';
 
             var pagination: Pagination = {
                 pageIndex: 0,
-                pageSize: options.pageSize || 20
-            }
+                pageSize: options.pageSize || 20,
+                totalCount: -1
+            };
 
             $scope.selected = function (item: any) {
 
@@ -80,7 +80,7 @@ namespace mcscontrols {
 
         private initializeScope(source: PaginationData, $scope: ITablePaginationScope) {
 
-            $scope.data = source.data;
+            $scope.data = source.pagedData;
             $scope.currentPageIndex = source.pageIndex;
             $scope.currentPageSize = source.pageSize;
             $scope.currentTotalCount = source.totalCount;
@@ -108,6 +108,15 @@ namespace mcscontrols {
                 } else {
                     defer.resolve(loadData);
                 }
+            } else if (options.async && options.async.url) {
+
+                this.$http.post<PaginationData>(options.async.url, params).then(
+                    res => {
+                        defer.resolve(res.data);
+                    },
+                    res => {
+                        this.toastrService.send('HTTP获取失败', '出错了 :(', 3)
+                    });
             }
 
             return defer.promise;

@@ -147,7 +147,8 @@ var mcscontrols;
         'mcs.controls.input.number',
         'mcs.controls.input.modal',
         'mcs.controls.input.file',
-        'mcs.controls.configurationBroker'
+        'mcs.controls.configurationBroker',
+        'mcs.controls.loading'
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -817,6 +818,67 @@ var mcscontrols;
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var $LoadingService = /** @class */ (function () {
+        function $LoadingService($rootScope, $templateCache) {
+            this.$rootScope = $rootScope;
+            this.$templateCache = $templateCache;
+            this.template = angular.element(this.$templateCache.get('templates/mcs.loading.html'));
+            angular.element(document).find('body').append(this.template);
+            this.template.addClass('hidden');
+            this.count = 0;
+        }
+        $LoadingService.prototype.start = function () {
+            this.count++;
+            this.template.removeClass('hidden');
+        };
+        $LoadingService.prototype.stop = function () {
+            this.count--;
+            if (this.count <= 0) {
+                this.template.addClass('hidden');
+            }
+        };
+        $LoadingService.$inject = ['$rootScope', '$templateCache'];
+        return $LoadingService;
+    }());
+    var loadingService = angular.module('mcs.controls.loading', ['mcs.controls.templates']);
+    loadingService.service('loadingService', $LoadingService);
+    var httpLoadingInterceptor = /** @class */ (function () {
+        function httpLoadingInterceptor($q, loadingService) {
+            var _this = this;
+            this.$q = $q;
+            this.loadingService = loadingService;
+            this.request = function (config) {
+                _this.loadingService.start();
+                return config;
+            };
+            this.requestError = function (err) {
+                _this.loadingService.stop();
+                return _this.$q.reject(err);
+            };
+            this.response = function (res) {
+                _this.loadingService.stop();
+                return res;
+            };
+            this.responseError = function (err) {
+                _this.loadingService.stop();
+                return _this.$q.reject(err);
+            };
+        }
+        httpLoadingInterceptor.factory = function () {
+            var directive = function (a, b) { return new httpLoadingInterceptor(a, b); };
+            directive.$inject = ['$q', 'loadingService'];
+            return directive;
+        };
+        return httpLoadingInterceptor;
+    }());
+    loadingService.config(['$httpProvider', function ($httpProvider) {
+            $httpProvider.interceptors.push(httpLoadingInterceptor.factory());
+        }]);
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
     var ModalSize;
     (function (ModalSize) {
         ModalSize[ModalSize["lg"] = 0] = "lg";
@@ -1101,16 +1163,19 @@ var mcscontrols;
 var mcscontrols;
 (function (mcscontrols) {
     var $TablePaginationController = /** @class */ (function () {
-        function $TablePaginationController($scope, $q, toastrService) {
+        function $TablePaginationController($scope, $q, $http, toastrService) {
             var _this = this;
             this.$scope = $scope;
             this.$q = $q;
+            this.$http = $http;
+            this.toastrService = toastrService;
             var options = $scope.$parent.$eval($scope.optionsName);
             if (!options)
                 throw 'Must have options';
             var pagination = {
                 pageIndex: 0,
-                pageSize: options.pageSize || 20
+                pageSize: options.pageSize || 20,
+                totalCount: -1
             };
             $scope.selected = function (item) {
                 $scope.bindingValue = item;
@@ -1120,12 +1185,13 @@ var mcscontrols;
             });
         }
         $TablePaginationController.prototype.initializeScope = function (source, $scope) {
-            $scope.data = source.data;
+            $scope.data = source.pagedData;
             $scope.currentPageIndex = source.pageIndex;
             $scope.currentPageSize = source.pageSize;
             $scope.currentTotalCount = source.totalCount;
         };
         $TablePaginationController.prototype.loadPaginationData = function (pagination, options) {
+            var _this = this;
             var defer = this.$q.defer();
             var params = null;
             if (options.async && options.async.params) {
@@ -1142,12 +1208,19 @@ var mcscontrols;
                     defer.resolve(loadData);
                 }
             }
+            else if (options.async && options.async.url) {
+                this.$http.post(options.async.url, params).then(function (res) {
+                    defer.resolve(res.data);
+                }, function (res) {
+                    _this.toastrService.send('HTTP获取失败', '出错了 :(', 3);
+                });
+            }
             return defer.promise;
         };
         $TablePaginationController.prototype.isIPromise = function (source) {
             return source && typeof (source.then) != 'undefined';
         };
-        $TablePaginationController.$inject = ['$scope', '$q', 'toastrService'];
+        $TablePaginationController.$inject = ['$scope', '$q', '$http', 'toastrService'];
         return $TablePaginationController;
     }());
     var $TablePaginationDirective = /** @class */ (function () {

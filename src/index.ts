@@ -16,6 +16,7 @@ namespace mcscontrols {
         'mcs.controls.input.number',
         'mcs.controls.input.modal',
         'mcs.controls.input.file',
-        'mcs.controls.configurationBroker'
+        'mcs.controls.configurationBroker',
+        'mcs.controls.loading'
     ]);
 }

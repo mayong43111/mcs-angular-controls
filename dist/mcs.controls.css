@@ -5,6 +5,35 @@
     border: 0;
     background-color: #ffffff;
 }
+/*loading*/
+
+.waiting-container {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 9999;
+    -moz-opacity: 0.4;
+    opacity: .40;
+    filter: alpha(opacity=40);
+}
+
+.loading-img {
+    text-align: center;
+    margin: auto;
+}
+
+.loading-img-content {
+    width: 100px;
+    height: 100px;
+    background-image: url("img/personnel-loading.gif");
+    background-size: cover;
+    margin: auto;
+    margin-top: 100px;
+}
 .toast-title {
     font-weight: 700
 }

@@ -27,6 +27,8 @@ $templateCache.put("templates/mcs.input.text.html","<span><input type=\"text\" n
 
 $templateCache.put("templates/mcs.input.textarea.html","<span><textarea ng-if=\"!readonly\" class=\"form-control\" rows=\"3\" ng-trim=\"false\" ng-model=\"$parent.bindingValue\"></textarea><pre ng-if=\"readonly\" class=\"textarea-readonly\">{{bindingValue}}</pre></span>")
 
+$templateCache.put("templates/mcs.loading.html","<div class=\"waiting-container loading-img\"><div class=\"loading-img-content\"></div><p>正在处理，请稍候<span class=\"dotting\"></span></p></div>")
+
 $templateCache.put("templates/mcs.modal.alert.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"submitted(true)\">确定</button></div>")
 
 $templateCache.put("templates/mcs.modal.confirm.html","<div class=\"modal-body\"><p>{{data}}</p></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-sm btn-default\" ng-click=\"closed()\">取消</button> <button type=\"button\" class=\"btn btn-sm btn-primary\" ng-click=\"submitted(true)\">确定</button></div>")
