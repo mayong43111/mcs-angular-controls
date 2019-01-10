@@ -1,13 +1,14 @@
-var gulp = require('gulp');
-var ts = require('gulp-typescript');
-var sourcemaps = require('gulp-sourcemaps');
-var html2js = require('gulp-html2js');
-var concat = require('gulp-concat');
-var uglify = require('gulp-uglify');
-var rename = require('gulp-rename');
-var htmlmin = require('gulp-htmlmin');
-var cleanCSS = require('gulp-clean-css');
-var copy = require('gulp-copy');
+const gulp = require('gulp');
+const ts = require('gulp-typescript');
+const sourcemaps = require('gulp-sourcemaps');
+const html2js = require('gulp-html2js');
+const concat = require('gulp-concat');
+const uglify = require('gulp-uglify');
+const rename = require('gulp-rename');
+const htmlmin = require('gulp-htmlmin');
+const cleanCSS = require('gulp-clean-css');
+const copy = require('gulp-copy');
+const markdown = require('gulp-markdown');
 
 gulp.task('html2js', function () {
 
@@ -30,7 +31,7 @@ gulp.task('ts-build', function () {
         .pipe(tsProject())
         .pipe(concat('mcs.controls.js'))
         .pipe(sourcemaps.mapSources(function (sourcePath, file) {
-            return '../src/' + sourcePath;
+            return './src/' + sourcePath;
         }))
         .pipe(sourcemaps.write('.', { includeContent: false }))
         .pipe(gulp.dest('dist'));
@@ -66,6 +67,15 @@ gulp.task('img-copy', function () {
     gulp
         .src('src/img/**/*')
         .pipe(copy('dist/img', { prefix: 2 }));
+});
+
+gulp.task('docs-build', function () {
+
+    gulp
+        .src('docs/**/*.md')
+        .pipe(markdown())
+        .pipe(rename({ extname: '.html' }))
+        .pipe(gulp.dest('help'))
 });
 
 gulp.task('all', ['compress-js', 'compress-css', 'img-copy'], function () {

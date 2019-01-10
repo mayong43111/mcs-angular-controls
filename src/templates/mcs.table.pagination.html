@@ -1,17 +1,33 @@
-<ul class="pagination" style="margin: 0;">
-    <li>
-        <a href="#">
-            <span>&laquo;</span>
-        </a>
-    </li>
-    <li><a href="#">1</a></li>
-    <li><a href="#">2</a></li>
-    <li><a href="#">3</a></li>
-    <li><a href="#">4</a></li>
-    <li><a href="#">5</a></li>
-    <li>
-        <a href="#">
-            <span>&raquo;</span>
-        </a>
-    </li>
-</ul>
+<div class="row">
+    <div class="col-sm-5">
+        <div class="dataTables_info" role="alert" aria-live="polite" aria-relevant="all">当前第{{currentPaginate.pageIndex}}页，共{{currentPaginate.totalCount}}条数据。</div>
+    </div>
+    <div class="col-sm-7">
+        <div class="dataTables_paginate paging_simple_numbers">
+            <ul class="pagination">
+                <li class="paginate_button previous" ng-class="{ 'disabled': !previousPaginate }" ng-click="changePaginate(previousPaginate)">
+                    <a>上一页</a>
+                </li>
+                <li ng-if="firstPaginate" class="paginate_button" ng-click="changePaginate(firstPaginate)" ng-class="{ 'active': firstPaginate.pageIndex==currentPaginate.pageIndex }">
+                    <a>{{firstPaginate.pageIndex}}</a>
+                </li>
+                <li class="paginate_button" ng-if="isShowFirstMore">
+                    <a>...</a>
+                </li>
+                <li ng-repeat="item in paginates track by $index" class="paginate_button" ng-class="{ 'active': item.pageIndex==currentPaginate.pageIndex }"
+                    ng-click="changePaginate(item)">
+                    <a>{{item.pageIndex}}</a>
+                </li>
+                <li class="paginate_button" ng-if="isShowLastestMore">
+                    <a>...</a>
+                </li>
+                <li ng-if="lastestPaginate" class="paginate_button" ng-click="changePaginate(lastestPaginate)" ng-class="{ 'active': lastestPaginate.pageIndex==currentPaginate.pageIndex }">
+                    <a>{{lastestPaginate.pageIndex}}</a>
+                </li>
+                <li class="paginate_button next" ng-class="{ 'disabled': !nextPaginate }" ng-click="changePaginate(nextPaginate)">
+                    <a>下一页</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

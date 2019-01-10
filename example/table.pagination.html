@@ -72,7 +72,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <p> Result: {{normal_val}}</p>
+                <p> Result: {{normal_val2}}</p>
                 <p><button class="btn btn-default" ng-click="refresh2()">刷新</button></p>
             </div>
         </div>
@@ -81,6 +81,7 @@
     <!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
     <script src="../node_modules/angular/angular.js"></script>
+    <script src="../node_modules/oclazyload/dist/ocLazyLoad.js"></script>
     <script src="../dist/templates.js"></script>
     <script src="../dist/mcs.controls.js"></script>
     <script>
@@ -89,6 +90,8 @@
             var app = angular.module('app', ['mcs.controls']);
 
             app.controller('ExampleController', ['$scope', 'toastrService', function ($scope, toastrService) {
+
+                var tableControl2;
 
                 var loadPaginationData = function (pagedQueryCriteria) {
 
@@ -121,17 +124,14 @@
                     callback: {
                         onInitiated: function (table) {
 
-                            $scope.tableControl2 = table;
+                            tableControl2 = table;
                         }
                     }
                 };
 
                 $scope.refresh2 = function () {
 
-                    if ($scope.tableControl2) {
-
-                        $scope.tableControl2.refresh();
-                    }
+                    if (tableControl2) { tableControl2.refresh(); }
                 }
             }]);
 

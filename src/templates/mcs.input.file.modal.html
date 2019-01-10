@@ -3,15 +3,15 @@
         <div class="dndArea placeholder" ng-show="fileCount <= 0">
             <div class="filePicker webuploader-container">
             </div>
-            <p>或将附件拖到这里，单次最多可选300个</p>
+            <p>或将附件拖到这里，单次最多可选{{fileNumLimit}}个</p>
         </div>
         <ul class="filelist">
             <li ng-repeat="file in files">
                 <a class="file">
                     <p class="title">{{file.name}}</p>
                     <p class="imgWrap"></p>
-                    <p class="progress"><span style="display: none; width: 0px;"></span></p>
                     <p class="error" ng-if="file.isError">{{file.errorMessage}}</p>
+                    <p class="success" ng-if="file.isCompleted"></p>
                     <div class="file-panel">
                         <span class="cancel" ng-click="removeFile(file)">删除</span>
                     </div>
@@ -20,13 +20,13 @@
         </ul>
     </div>
     <div class="statusBar" ng-show="fileCount > 0">
-        <div class="progress" style="display: none;">
-            <span class="text">0%</span>
-            <span class="percentage" style="width: 0%;"></span>
+        <div class="progress" ng-show="progress">
+            <span class="text">{{progress}}</span>
+            <span class="percentage" style="width: {{progress}};"></span>
         </div>
-        <div class="info">已添加新文件{{fileCount}}个（{{fileSize}}）</div>
+        <div class="info">已添加文件{{fileCount}}个</div>
         <div class="btns">
-            <div class="filePicker2 webuploader-container">
+            <div class="filePicker2 webuploader-container" ng-show="fileNumLimit > fileCount">
             </div>
             <div class="uploadBtn state-pedding" ng-click="upload()">开始上传</div>
         </div>
@@ -35,5 +35,5 @@
 
 <div class="modal-footer">
     <button type="submit" class="btn btn-default" ng-click="closed()">取消</button>
-    <button type="submit" class="btn btn-default" ng-click="submitted(data)">确定</button>
+    <button type="submit" class="btn btn-default" ng-click="submitted(data)" ng-disabled="waitCount > 0">确定</button>
 </div>

@@ -18,9 +18,9 @@ namespace mcscontrols {
     }
 
     interface TablePaginationAsyncOptions {
-        url: string;
-        params: any;
-        orderBy: any;
+        url?: string;
+        params?: any;
+        orderBy?: any;
     }
 
     interface TablePaginationAdapterOption {
@@ -40,12 +40,14 @@ namespace mcscontrols {
         bindingValue: any | Array<any>;
 
         selected: (item: any) => void;
+        changePaginate: (pagination: Pagination) => void;
     }
 
     interface Pagination {
         pageIndex: number,
         pageSize: number,
         totalCount: number,
+        top: number;
     }
 
     interface PaginationData extends Pagination {
@@ -77,14 +79,22 @@ namespace mcscontrols {
             if (!this.currentOptions) throw 'Must have options';
 
             this.currentPagination = {
-                pageIndex: 0,
+                pageIndex: 1,
                 pageSize: this.currentOptions.pageSize || 20,
-                totalCount: -1
+                totalCount: -1,
+                top: -1
             };
 
             $scope.selected = function (item: any) {
 
                 $scope.bindingValue = item;
+            }
+
+            $scope.changePaginate = (pagination: Pagination) => {
+
+                if (!pagination || pagination.pageIndex == this.currentPagination.pageIndex) return;
+
+                this.refresh(pagination);
             }
 
             this.loadPaginationData(this.currentPagination, this.currentOptions).then(data => {
@@ -98,9 +108,31 @@ namespace mcscontrols {
             }
         }
 
-        public refresh() {
+        public refresh(pagination?: Pagination) {
 
-            this.loadPaginationData(this.currentPagination, this.currentOptions).then(data => {
+            pagination = pagination || this.currentPagination;
+
+            this.loadPaginationData(pagination, this.currentOptions).then(data => {
+
+                this.initializeScope(data, this.$scope);
+            });
+        }
+
+        public search(params?: any) {
+
+            let pagination: Pagination = {
+                pageIndex: 1,
+                pageSize: this.currentOptions.pageSize || 20,
+                totalCount: -1,
+                top: -1
+            };
+
+            if (params) {
+                this.currentOptions.async = this.currentOptions.async || {};
+                this.currentOptions.async.params = params;
+            }
+
+            this.loadPaginationData(pagination, this.currentOptions).then(data => {
 
                 this.initializeScope(data, this.$scope);
             });
@@ -108,10 +140,8 @@ namespace mcscontrols {
 
         private initializeScope(source: PaginationData, $scope: ITablePaginationScope) {
 
+            this.calculateCurrentPaginate($scope, source);
             $scope.data = source.pagedData;
-            $scope.currentPageIndex = source.pageIndex;
-            $scope.currentPageSize = source.pageSize;
-            $scope.currentTotalCount = source.totalCount;
         }
 
         private loadPaginationData(pagination: Pagination, options: TablePaginationOption): ng.IPromise<PaginationData> {
@@ -158,6 +188,96 @@ namespace mcscontrols {
         private isIPromise(source: any) {
 
             return source && typeof (source.then) != 'undefined';
+        }
+
+        private calculateCurrentPaginate(scope: any, data: any): void {
+
+            var currentPaginate = this.currentPagination = {
+                pageIndex: data.pageIndex,
+                pageSize: data.pageSize,
+                totalCount: data.totalCount,
+                top: -1
+            };
+
+            scope.currentPaginate = currentPaginate;
+
+            scope.paginates = [];
+            scope.previousPaginate = null;
+            scope.nextPaginate = null;
+            scope.firstPaginate = null;
+            scope.lastestPaginate = null;
+            scope.isShowLastestMore = false;
+            scope.isShowFirstMore = false;
+
+            if (!currentPaginate || !currentPaginate.totalCount || !currentPaginate.pageSize) return;
+
+            var totalPageCount = Math.ceil(currentPaginate.totalCount / currentPaginate.pageSize);
+            scope.totalPageCount = totalPageCount;
+
+            if (currentPaginate.pageIndex < totalPageCount) {
+                var nextPaginate: Pagination = {
+                    pageIndex: currentPaginate.pageIndex + 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                }
+                scope.nextPaginate = nextPaginate;
+            }
+
+            if (currentPaginate.pageIndex > 1) {
+                var previousPaginate: Pagination = {
+                    pageIndex: currentPaginate.pageIndex - 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                }
+
+                scope.previousPaginate = previousPaginate;
+            }
+
+            var i = currentPaginate.pageIndex - 2;
+            if (i < 1) { i = 1; }
+            var maxi = i + 4;
+
+            if (i > 1) {
+                var firstPaginate: Pagination = {
+                    pageIndex: 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+
+                scope.firstPaginate = firstPaginate;
+            }
+
+            scope.isShowFirstMore = i > 2;
+
+            if (maxi <= totalPageCount) {
+
+                var lastestPaginate: Pagination = {
+                    pageIndex: totalPageCount,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                }
+
+                scope.lastestPaginate = lastestPaginate;
+            }
+
+            if (maxi < totalPageCount) {
+                scope.isShowLastestMore = true;
+            }
+
+            for (i; i < maxi && i <= totalPageCount; i++) {
+                var item: Pagination = {
+                    pageIndex: i,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                }
+
+                scope.paginates.push(item);
+            }
         }
     }
 

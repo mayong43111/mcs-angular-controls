@@ -1,7 +1,8 @@
 <span>
     <div class="input-group" ng-if="!readonly">
         <label class="form-control" readonly>
-            <span class="tag label label-primary" ng-repeat="bv in bindValue">{{bv.text}}<span class="remove" ng-click="$parent.remove(bv)"></span></span>
+            <span class="tag label label-primary" ng-repeat="item in $parent.bindingValue">{{item.title}}<span class="remove"
+                    ng-click="$parent.remove(item)"></span></span>
         </label>
         <span class="input-group-addon" ng-click="$parent.open()"><span class="glyphicon glyphicon glyphicon-upload"></span></span>
     </div>

@@ -258,7 +258,7 @@ var mcscontrols;
 var mcscontrols;
 (function (mcscontrols) {
     var FileController = /** @class */ (function () {
-        function FileController($scope, $timeout, toastrService, configurationBroker) {
+        function FileController($scope, $timeout, toastrService, configurationBroker, $ocLazyLoad) {
             var _this = this;
             this.$scope = $scope;
             this.toastrService = toastrService;
@@ -322,10 +322,9 @@ var mcscontrols;
                     case 'finish':
                         stats = _this.uploader.getStats();
                         if (stats.successNum) {
-                            _this.toastrService.send('上传成功', ':)', 1);
                         }
                         else {
-                            // 没有成功的图片，重设
+                            // 没有成功
                             _this.currentState = 'done';
                         }
                         break;
@@ -357,6 +356,11 @@ var mcscontrols;
                         pfile.errorMessage = message;
                     });
                 };
+                var showCompleted = function () {
+                    _this.$scope.$apply(function (scope) {
+                        pfile.isCompleted = true;
+                    });
+                };
                 file.on('statuschange', function (cur, prev) {
                     if (cur === 'error' || cur === 'invalid') {
                         console.log(file.statusText);
@@ -365,6 +369,9 @@ var mcscontrols;
                     }
                     else if (cur === 'interrupt') {
                         showError('interrupt');
+                    }
+                    else if (cur == 'complete') {
+                        showCompleted();
                     }
                 });
             };
@@ -409,37 +416,31 @@ var mcscontrols;
                 $placeHolder = $wrap.find('.placeholder'), 
                 // 总体进度条
                 $progress = $statusBar.find('.progress');
-                _this.uploader = WebUploader.create({
+                var uploaderOptions = angular.extend({}, {
+                    paste: document.body,
+                    disableGlobalDnd: true,
+                    // chunked: true,
+                    fileNumLimit: 300,
+                }, _this.$scope.data.options.webuploader, {
+                    server: _this.$scope.data.options.uploadUrl,
+                    swf: _this.configurationBroker.getAppSetting('uploader.swfUrl'),
                     pick: {
                         id: _this.$scope.container.find('.filePicker'),
                         label: '点击选择附件'
                     },
-                    dnd: _this.$scope.container.find('.queueList'),
-                    paste: document.body,
-                    // swf文件路径
-                    swf: _this.configurationBroker.getAppSetting('uploader.swfUrl'),
-                    disableGlobalDnd: true,
-                    chunked: true,
-                    server: 'http://2betop.net/fileupload.php',
-                    fileNumLimit: 300,
-                    fileSizeLimit: 5 * 1024 * 1024,
-                    fileSingleSizeLimit: 1 * 1024 * 1024 // 50 M
+                    dnd: _this.$scope.container.find('.queueList')
                 });
+                _this.$scope.fileNumLimit = uploaderOptions.fileNumLimit;
+                _this.uploader = WebUploader.create(uploaderOptions);
                 // 添加“添加文件”的按钮，
                 _this.uploader.addButton({
                     id: _this.$scope.container.find('.filePicker2'),
                     label: '继续添加'
                 });
-                _this.uploader.onUploadProgress = function (file, percentage) {
-                    // var $li = $('#' + file.id),
-                    //     $percent = $li.find('.progress span');
-                    // $percent.css('width', percentage * 100 + '%');
-                    // percentages[file.id][1] = percentage;
-                    // updateTotalProgress();
-                };
                 _this.uploader.onFileQueued = function (file) {
                     _this.$scope.$apply(function (scope) {
                         scope.fileCount++;
+                        scope.waitCount++;
                         scope.fileSize += file.size;
                     });
                     if (_this.$scope.fileCount === 1) {
@@ -452,6 +453,7 @@ var mcscontrols;
                 };
                 _this.uploader.onFileDequeued = function (file) {
                     _this.$scope.fileCount--;
+                    _this.$scope.waitCount--;
                     _this.$scope.fileSize -= file.size;
                     // if (!fileCount) {
                     //     setState('pedding');
@@ -459,6 +461,27 @@ var mcscontrols;
                     // removeFile(file);
                     // updateTotalProgress();
                 };
+                _this.uploader.on('uploadSuccess', function (file, data) {
+                    _this.$scope.$apply(function (scope) {
+                        scope.waitCount--;
+                        scope.data.value.push(data[0]);
+                    });
+                });
+                _this.uploader.on('uploadProgress', function (file, percentage) {
+                    // var $li = $('#' + file.id),
+                    //     $percent = $li.find('.progress span');
+                    // $percent.css('width', percentage * 100 + '%');
+                    // percentages[file.id][1] = percentage;
+                    // updateTotalProgress();
+                    _this.$scope.$apply(function (scope) {
+                        if (percentage == 1) {
+                            scope.progress = null;
+                        }
+                        else {
+                            scope.progress = percentage * 100 + '%';
+                        }
+                    });
+                });
                 _this.uploader.on('all', function (type) {
                     var stats;
                     switch (type) {
@@ -490,16 +513,16 @@ var mcscontrols;
                     _this.uploader.destroy();
                 submittedFunc(data);
             };
-            // 添加的文件数量（未上传的，上传后会减掉）
-            $scope.fileCount = 0; //TODO: 前天目前用这个判读显示模式，其实不对，而是已有文件+新选的文件>0
-            // 添加的文件总大小（未上传的，上传后会减掉）
+            $scope.fileCount = 0;
+            $scope.waitCount = 0; // 添加的文件数量（未上传的，上传后会减掉）
+            // 添加的文件总大小
             $scope.fileSize = 0;
             $scope.files = [];
             $scope.removeFile = this.removeFile;
             $scope.upload = this.upload;
-            $timeout(function () { return _this.initializeUploader(); });
+            $ocLazyLoad.load(['webuploader-load']).then(function () { return _this.initializeUploader(); });
         }
-        FileController.$inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker'];
+        FileController.$inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker', '$ocLazyLoad'];
         return FileController;
     }());
     var $FileControlDirective = /** @class */ (function () {
@@ -516,6 +539,9 @@ var mcscontrols;
             };
             this.controller = ['$scope', 'modalService', function ($scope, modalService) {
                     var options = angular.extend({}, _this.defaultOptions, $scope.$eval($scope.optionsName));
+                    if (!$scope.bindingValue || $scope.bindingValue.constructor !== Array) {
+                        $scope.bindingValue = [];
+                    }
                     $scope.open = function () {
                         modalService.open({
                             title: '附件上传...',
@@ -523,7 +549,7 @@ var mcscontrols;
                             data: { options: options, value: $scope.bindingValue },
                             controller: FileController
                         }).then(function (data) {
-                            $scope.bindingValue = data;
+                            $scope.bindingValue = data.value;
                         });
                     };
                 }];
@@ -535,7 +561,7 @@ var mcscontrols;
         };
         return $FileControlDirective;
     }());
-    var inputTFile = angular.module('mcs.controls.input.file', ['mcs.controls.templates', 'mcs.controls.configurationBroker']);
+    var inputTFile = angular.module('mcs.controls.input.file', ['oc.lazyLoad', 'mcs.controls.templates', 'mcs.controls.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1182,12 +1208,18 @@ var mcscontrols;
             if (!this.currentOptions)
                 throw 'Must have options';
             this.currentPagination = {
-                pageIndex: 0,
+                pageIndex: 1,
                 pageSize: this.currentOptions.pageSize || 20,
-                totalCount: -1
+                totalCount: -1,
+                top: -1
             };
             $scope.selected = function (item) {
                 $scope.bindingValue = item;
+            };
+            $scope.changePaginate = function (pagination) {
+                if (!pagination || pagination.pageIndex == _this.currentPagination.pageIndex)
+                    return;
+                _this.refresh(pagination);
             };
             this.loadPaginationData(this.currentPagination, this.currentOptions).then(function (data) {
                 _this.initializeScope(data, $scope);
@@ -1196,17 +1228,32 @@ var mcscontrols;
                 this.currentOptions.callback.onInitiated(this);
             }
         }
-        $TablePaginationController.prototype.refresh = function () {
+        $TablePaginationController.prototype.refresh = function (pagination) {
             var _this = this;
-            this.loadPaginationData(this.currentPagination, this.currentOptions).then(function (data) {
+            pagination = pagination || this.currentPagination;
+            this.loadPaginationData(pagination, this.currentOptions).then(function (data) {
+                _this.initializeScope(data, _this.$scope);
+            });
+        };
+        $TablePaginationController.prototype.search = function (params) {
+            var _this = this;
+            var pagination = {
+                pageIndex: 1,
+                pageSize: this.currentOptions.pageSize || 20,
+                totalCount: -1,
+                top: -1
+            };
+            if (params) {
+                this.currentOptions.async = this.currentOptions.async || {};
+                this.currentOptions.async.params = params;
+            }
+            this.loadPaginationData(pagination, this.currentOptions).then(function (data) {
                 _this.initializeScope(data, _this.$scope);
             });
         };
         $TablePaginationController.prototype.initializeScope = function (source, $scope) {
+            this.calculateCurrentPaginate($scope, source);
             $scope.data = source.pagedData;
-            $scope.currentPageIndex = source.pageIndex;
-            $scope.currentPageSize = source.pageSize;
-            $scope.currentTotalCount = source.totalCount;
         };
         $TablePaginationController.prototype.loadPaginationData = function (pagination, options) {
             var _this = this;
@@ -1240,6 +1287,80 @@ var mcscontrols;
         };
         $TablePaginationController.prototype.isIPromise = function (source) {
             return source && typeof (source.then) != 'undefined';
+        };
+        $TablePaginationController.prototype.calculateCurrentPaginate = function (scope, data) {
+            var currentPaginate = this.currentPagination = {
+                pageIndex: data.pageIndex,
+                pageSize: data.pageSize,
+                totalCount: data.totalCount,
+                top: -1
+            };
+            scope.currentPaginate = currentPaginate;
+            scope.paginates = [];
+            scope.previousPaginate = null;
+            scope.nextPaginate = null;
+            scope.firstPaginate = null;
+            scope.lastestPaginate = null;
+            scope.isShowLastestMore = false;
+            scope.isShowFirstMore = false;
+            if (!currentPaginate || !currentPaginate.totalCount || !currentPaginate.pageSize)
+                return;
+            var totalPageCount = Math.ceil(currentPaginate.totalCount / currentPaginate.pageSize);
+            scope.totalPageCount = totalPageCount;
+            if (currentPaginate.pageIndex < totalPageCount) {
+                var nextPaginate = {
+                    pageIndex: currentPaginate.pageIndex + 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+                scope.nextPaginate = nextPaginate;
+            }
+            if (currentPaginate.pageIndex > 1) {
+                var previousPaginate = {
+                    pageIndex: currentPaginate.pageIndex - 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+                scope.previousPaginate = previousPaginate;
+            }
+            var i = currentPaginate.pageIndex - 2;
+            if (i < 1) {
+                i = 1;
+            }
+            var maxi = i + 4;
+            if (i > 1) {
+                var firstPaginate = {
+                    pageIndex: 1,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+                scope.firstPaginate = firstPaginate;
+            }
+            scope.isShowFirstMore = i > 2;
+            if (maxi <= totalPageCount) {
+                var lastestPaginate = {
+                    pageIndex: totalPageCount,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+                scope.lastestPaginate = lastestPaginate;
+            }
+            if (maxi < totalPageCount) {
+                scope.isShowLastestMore = true;
+            }
+            for (i; i < maxi && i <= totalPageCount; i++) {
+                var item = {
+                    pageIndex: i,
+                    pageSize: currentPaginate.pageSize,
+                    totalCount: currentPaginate.totalCount,
+                    top: -1
+                };
+                scope.paginates.push(item);
+            }
         };
         $TablePaginationController.$inject = ['$scope', '$q', '$http', 'toastrService'];
         return $TablePaginationController;
