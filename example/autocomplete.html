@@ -23,7 +23,7 @@
 <body>
     <div class="container">
         <div class="page-header">
-            <h1>MCS Angular Controls <small>input file</small></h1>
+            <h1>MCS Angular Controls <small>autocomplete</small></h1>
         </div>
     </div>
 
@@ -32,15 +32,17 @@
         <div class="panel panel-default">
             <div class="panel-heading">Normal <input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
             <div class="panel-body">
-                <p><input mcs-input-file mcs-readonly="normal_readonly" binding-value="normal_val" /></p>
+                <p><input mcs-autocomplete="options" binding-value="normal_val" /></p>
                 <p>Result: {{normal_val}}</p>
+                <p>Result: {{normal_txt}}</p>
             </div>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">Readonly</div>
             <div class="panel-body">
-                <p><input mcs-input-file mcs-readonly="true" binding-value="normal_val" /></p>
+                <p><input mcs-autocomplete mcs-readonly="true" binding-value="normal_val" />
+                </p>
             </div>
         </div>
     </div>
@@ -56,26 +58,23 @@
 
             var app = angular.module('app', ['mcs.controls']);
 
-            app.config(['configurationBrokerProvider', function (configurationBroker) {
-
-                configurationBroker.initialize({
-                    'uploader.swfUrl': '/plugins/webuploader/Uploader.swf'
-                });
-            }]);
-
-            app.config(['$ocLazyLoadProvider', function ($ocLazyLoadProvider) {
-                $ocLazyLoadProvider.config({
-                    modules: [{
-                        name: 'webuploader-load',
-                        files: [
-                            '../plugins/webuploader/webuploader.js',
-                            '../plugins/webuploader/webuploader.css'
-                        ]
-                    }]
-                });
-            }]);
-
             app.controller('ExampleController', ['$scope', function ($scope) {
+
+                $scope.normal_val = [];
+
+                // $scope.normal_options = [
+                //     { id: '001', name: '第一个选项' },
+                //     { id: '002', name: '第二个选项' },
+                //     { id: '003', name: '第三个选项' },
+                //     { id: '004', name: '第四个选项' },
+                // ];
+
+                $scope.options = {
+                    async: {
+                        url: 'http://localhost:9000/XGKWebApp/XGKApi/api/UserGraph/Query',
+                        //params: { name: '007' }
+                    },
+                };
             }]);
 
             angular.element(document).find('body').attr('ng-controller', 'ExampleController');

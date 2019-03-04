@@ -24,11 +24,6 @@ namespace mcscontrols {
 
         start(): void {
 
-            //一个诡异的问题，也没那么诡异，template的初始化在run中，时序比较晚一些，所以只好再重新来一次
-            if (this.template && !this.template[0]) {
-                this.initLoading();
-            }
-
             this.count++;
             if (this.template) {
                 this.template.removeClass('hidden');
@@ -48,40 +43,56 @@ namespace mcscontrols {
 
     const loadingService = angular.module('mcs.controls.loading', ['mcs.controls.templates']);
     loadingService.service('loadingService', $LoadingService);
+    loadingService.run(['loadingService', '$rootScope', function (loadingService: $LoadingService, $rootScope: ng.IScope) {
+
+        $rootScope.$on('HTTP_REQUEST_START', function (event: ng.IAngularEvent) {
+
+            loadingService.start();
+        });
+
+        $rootScope.$on('HTTP_REQUEST_STOP', function (event: ng.IAngularEvent) {
+
+            loadingService.stop();
+        });
+    }]);
 
     class httpLoadingInterceptor implements ng.IHttpInterceptor {
 
         static factory(): ng.IHttpInterceptorFactory {
 
             const directive = (a: any, b: any) => new httpLoadingInterceptor(a, b);
-            directive.$inject = ['$q', 'loadingService'];
+            directive.$inject = ['$q', '$rootScope'];
             return directive;
         }
 
-        constructor(private $q: ng.IQService, private loadingService: any) {
+        constructor(private $q: ng.IQService, private $rootScope: ng.IRootScopeService) {
         }
 
         request = (config: any) => {
 
-            this.loadingService.start();
+            if (config && config.data && config.data.$autoLoading) {
+                this.$rootScope.$broadcast('HTTP_REQUEST_START');
+            }
             return config;
         };
 
         requestError = (err: any) => {
 
-            this.loadingService.stop();
+            this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
             return this.$q.reject(err);
         };
 
         response = (res: any) => {
 
-            this.loadingService.stop();
+            if (res.config && res.config.data && res.config.data.$autoLoading) {
+                this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
+            }
             return res;
         };
 
         responseError = (err: any) => {
 
-            this.loadingService.stop();
+            this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
             return this.$q.reject(err);
         }
     }

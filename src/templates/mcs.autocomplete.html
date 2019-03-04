@@ -1,0 +1,28 @@
+<label class="select2 select2-container select2-container--default select2-container--below" style="width: 100%;"><span
+        class="selection">
+        <span class="select2-selection select2-selection--multiple" tabindex="-1">
+            <ul class="select2-selection__rendered">
+                <li class="select2-selection__choice" title="{{bv.name || bv}}"
+                    ng-repeat="bv in bindingValue track by $index"><span class="select2-selection__choice__remove"
+                        ng-if="!readonly" ng-click="remove(bv)">×</span>{{bv.name || bv}}</li>
+
+                <li class="select2-search select2-search--inline">
+                    <input class="select2-search__field" type="search" tabindex="0" autocomplete="off" autocorrect="off"
+                        autocapitalize="none" placeholder="" ng-show="!readonly" ng-model="tempNewValue"
+                        ng-keyup="onKeyUp($event)" ng-blur="onBlur()" ng-focus="onFocus()" size="{{tempNewValue.length + 1}}" />
+                </li>
+            </ul>
+        </span>
+    </span>
+    <span class="select2-container select2-container--default select2-container--open"
+        ng-show="that.show && that.suggestions.length > 0">
+        <span class="select2-dropdown select2-dropdown--below" style="width: 492px; height: 200px;">
+            <span class="select2-results">
+                <ul class="select2-results__options">
+                    <li class="select2-results__option" ng-repeat="suggestion in that.suggestions track by $index"
+                        ng-click="selected(suggestion)"><a>{{suggestion.name || suggestion}}</a></li>
+                </ul>
+            </span>
+        </span>
+    </span>
+</label>

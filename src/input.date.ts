@@ -3,12 +3,12 @@ namespace mcscontrols {
 
         static factory(): ng.IDirectiveFactory {
 
-            const directive = () => new $DateControlDirective();
-            //directive.$inject = [];
+            const directive = (a: any) => new $DateControlDirective(a);
+            directive.$inject = ['$ocLazyLoad'];
             return directive;
         }
 
-        constructor() {
+        constructor(private $ocLazyLoad: any, ) {
         }
 
         templateUrl = 'templates/mcs.input.date.html';
@@ -33,6 +33,13 @@ namespace mcscontrols {
             }
 
             $scope.options = angular.extend({}, defaultOptions, $scope.bindingOptions);
+
+            $scope.$watch('bindingValue', function (newValue: any, oldValue: any) {
+
+                if ($scope.datetimepicker) {
+                    $scope.datetimepicker.datetimepicker('update', newValue);
+                }
+            });
         }];
 
         link = (
@@ -43,38 +50,21 @@ namespace mcscontrols {
             transclude?: ng.ITranscludeFunction
         ): void => {
 
-            var datetimepicker: any;
+            this.$ocLazyLoad.load(['datetimepicker']).then(() => {
 
-            scope.$watch('bindingValue', function (newValue: any, oldValue: any) {
-
-                if (datetimepicker) {
-                    datetimepicker.datetimepicker('update', newValue);
-                }
-            });
-
-            scope.$watch('readonly', function (newValue: any, oldValue: any) {
-
-                if (newValue) {
-
-                    if (datetimepicker) {
-                        datetimepicker.datetimepicker('remove'); //TODO: 没生效
-                    }
-                } else {
-
-                    datetimepicker = instanceElement.find('.form_datetime')
-                        .datetimepicker(scope.options)
-                        .on('changeDate', function (event: any) {
-                            scope.$apply(function () {
-                                scope.bindingValue = event.date;
-                            });
+                scope.datetimepicker = instanceElement.find('.form_datetime')
+                    .datetimepicker(scope.options)
+                    .on('changeDate', function (event: any) {
+                        scope.$apply(function () {
+                            scope.bindingValue = event.date;
                         });
+                    });
 
-                    datetimepicker.datetimepicker('update', scope.bindingValue);
-                }
+                scope.datetimepicker.datetimepicker('update', scope.bindingValue);
             });
-        };
-    }
+        }
+    };
 
-    var inputDate = angular.module('mcs.controls.input.date', ['mcs.controls.templates']);
+    var inputDate = angular.module('mcs.controls.input.date', ['oc.lazyLoad', 'mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
 }

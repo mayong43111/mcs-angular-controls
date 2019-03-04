@@ -19,6 +19,7 @@ namespace mcscontrols {
 
     interface TablePaginationAsyncOptions {
         url?: string;
+        resourceUri?: string;
         params?: any;
         orderBy?: any;
     }
@@ -38,8 +39,11 @@ namespace mcscontrols {
         currentTotalCount: number;
         readonly: boolean;
         bindingValue: any | Array<any>;
+        selectedAll: boolean;
 
         selected: (item: any) => void;
+        allSelected: () => void;
+        updateSelectedAll: () => void;
         changePaginate: (pagination: Pagination) => void;
     }
 
@@ -68,15 +72,17 @@ namespace mcscontrols {
         private currentPagination: Pagination;
         private currentOptions: TablePaginationOption;
 
-        static $inject: Array<string> = ['$scope', '$q', '$http', 'toastrService'];
+        static $inject: Array<string> = ['$scope', '$q', '$http', 'configurationBroker'];
         constructor(
             private $scope: ITablePaginationScope,
             private $q: ng.IQService,
             private $http: ng.IHttpService,
-            private toastrService: any
+            private configurationBroker: any,
         ) {
             this.currentOptions = $scope.$parent.$eval($scope.optionsName);
             if (!this.currentOptions) throw 'Must have options';
+
+            $scope.selectedAll = false
 
             this.currentPagination = {
                 pageIndex: 1,
@@ -87,7 +93,55 @@ namespace mcscontrols {
 
             $scope.selected = function (item: any) {
 
-                $scope.bindingValue = item;
+                item.$selected = !item.$selected;
+
+                if (item.$selected) {
+
+                    $scope.bindingValue.push({ id: item.id, name: item.name, data: item });
+                } else {
+
+                    for (let i = 0; i < $scope.bindingValue.length; i++) {
+                        const element = $scope.bindingValue[i];
+
+                        if (item.id == element.id) {
+                            $scope.bindingValue.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                $scope.updateSelectedAll();
+            }
+
+            $scope.updateSelectedAll = function () {
+
+                var result = $scope.data.length > 0;
+
+                for (let i = 0; i < $scope.data.length; i++) {
+                    const element = $scope.data[i];
+
+                    if (!element.$selected) {
+                        result = false;
+                        break;
+                    }
+                }
+
+                $scope.selectedAll = result;
+            }
+
+            $scope.allSelected = function () {
+
+                var currentState = $scope.selectedAll;
+
+                for (let i = 0; i < $scope.data.length; i++) {
+
+                    const item = $scope.data[i];
+
+                    if (currentState == Boolean(item.$selected)) {
+
+                        $scope.selected(item);
+                    }
+                }
             }
 
             $scope.changePaginate = (pagination: Pagination) => {
@@ -96,6 +150,18 @@ namespace mcscontrols {
 
                 this.refresh(pagination);
             }
+
+            $scope.$watch('bindingValue', (newValue: any, oldValue: any, scope: any) => {
+
+                scope.bindingValue = scope.bindingValue || [];
+
+                if (scope.bindingValue.constructor != Array) {
+
+                    scope.bindingValue = [];
+                }
+                this.refreshSelected(scope);
+            });
+
 
             this.loadPaginationData(this.currentPagination, this.currentOptions).then(data => {
 
@@ -142,6 +208,33 @@ namespace mcscontrols {
 
             this.calculateCurrentPaginate($scope, source);
             $scope.data = source.pagedData;
+            this.refreshSelected($scope);
+        }
+
+        private refreshSelected($scope: ITablePaginationScope) {
+
+            if (!$scope.data) return;
+
+            for (let i = 0; i < $scope.data.length; i++) {
+
+                const item = $scope.data[i];
+
+                if (!$scope.bindingValue) {
+                    item.$selected = false;
+                } else {
+
+                    for (let j = 0; j < $scope.bindingValue.length; j++) {
+                        const element = $scope.bindingValue[j];
+
+                        if (item.id == element.id) {
+                            item.$selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $scope.updateSelectedAll();
         }
 
         private loadPaginationData(pagination: Pagination, options: TablePaginationOption): ng.IPromise<PaginationData> {
@@ -173,12 +266,11 @@ namespace mcscontrols {
                 }
             } else if (options.async && options.async.url) {
 
-                this.$http.post<PaginationData>(options.async.url, pagedQueryCriteria).then(
+                var url = this.configurationBroker.getResourceUri(options.async.url, options.async.resourceUri);
+
+                this.$http.post<PaginationData>(url, pagedQueryCriteria).then(
                     res => {
                         defer.resolve(res.data);
-                    },
-                    res => {
-                        this.toastrService.send('HTTP获取失败', '出错了 :(', 3)
                     });
             }
 
@@ -285,7 +377,7 @@ namespace mcscontrols {
 
         static factory(): ng.IDirectiveFactory {
 
-            const directive = (a: ng.ITemplateCacheService, b: ng.ICompileService) => new $TablePaginationDirective(a, b);
+            const directive = (a: ng.ITemplateCacheService, b: ng.ICompileService, c: any) => new $TablePaginationDirective(a, b);
             directive.$inject = ['$templateCache', '$compile'];
             return directive;
         }
@@ -299,7 +391,7 @@ namespace mcscontrols {
         restrict = 'A';
         replace = true;
         scope = {
-            bindingValue: '=',
+            bindingValue: '=?',
             optionsName: '@mcsTablePagination',
             readonly: '=?mcsReadonly'
         };
@@ -361,6 +453,7 @@ namespace mcscontrols {
             var tfootCheckbox = this.renderCheckbox(tableInfo.tfoot);
 
             this.bindingItemCheckbox(tBodyCheckbox);
+            this.bindingAllCheckbox(theadCheckbox);
         }
 
         private bindingItemCheckbox(checkbox: JQLite | undefined) {
@@ -368,6 +461,15 @@ namespace mcscontrols {
             if (!checkbox) return;
 
             checkbox.attr('ng-click', 'selected(item, $event)');
+            checkbox.attr('ng-checked', 'item.$selected');
+        }
+
+        private bindingAllCheckbox(checkbox: JQLite | undefined) {
+
+            if (!checkbox) return;
+
+            checkbox.attr('ng-click', 'allSelected()');
+            checkbox.attr('ng-checked', 'selectedAll');
         }
 
         private renderCheckbox(element: JQLite): JQLite | undefined {
@@ -376,7 +478,7 @@ namespace mcscontrols {
 
             if (tr.length > 0) {
 
-                var td = angular.element('<th></th>');
+                var td = angular.element('<th ng-hide="readonly"></th>');
                 var checkbox = angular.element('<input type="checkbox" ng-disabled="readonly" />');
                 td.append(checkbox);
 
@@ -416,6 +518,6 @@ namespace mcscontrols {
         }
     }
 
-    const tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates']);
+    const tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates', 'mcs.controls.configurationBroker']);
     tablePagination.directive('mcsTablePagination', $TablePaginationDirective.factory());
 }

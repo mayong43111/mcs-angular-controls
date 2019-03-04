@@ -17,6 +17,8 @@ namespace mcscontrols {
         'mcs.controls.input.modal',
         'mcs.controls.input.file',
         'mcs.controls.configurationBroker',
-        'mcs.controls.loading'
+        'mcs.controls.loading',
+        'mcs.controls.input.ueditor',
+        'mcs.controls.autocomplete',
     ]);
 }

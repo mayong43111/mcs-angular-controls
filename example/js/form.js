@@ -9,6 +9,24 @@ angular.element(document).ready(function () {
         });
     }]);
 
+    app.config(['$ocLazyLoadProvider', function ($ocLazyLoadProvider) {
+        $ocLazyLoadProvider.config({
+            modules: [{
+                name: 'datetimepicker',
+                files: [
+                    '../plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js',
+                    '../plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css'
+                ]
+            }, {
+                name: 'webuploader-load',
+                files: [
+                    '../plugins/webuploader/webuploader.js',
+                    '../plugins/webuploader/webuploader.css'
+                ]
+            }]
+        });
+    }]);
+
     app.controller('FormController', ['$scope', function ($scope) {
 
         $scope.formData = {};

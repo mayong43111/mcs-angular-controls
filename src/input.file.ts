@@ -2,30 +2,38 @@ namespace mcscontrols {
 
     declare var WebUploader: any;
 
+    enum FileStatus {
+        /// <summary>
+        /// 未修改
+        /// </summary>
+        Unmodified = 0,
+
+        /// <summary>
+        /// 新增加
+        /// </summary>
+        Inserted = 1,
+
+        /// <summary>
+        /// 已修改
+        /// </summary>
+        Updated = 2,
+
+        /// <summary>
+        /// 已删除
+        /// </summary>
+        Deleted = 3,
+
+        /// <summary>
+        /// 已上传（客户端）
+        /// </summary>
+        Uploaded = 99
+    }
+
     class FileController {
 
         //当前附件控件的状态 pedding, ready, uploading, confirm, done.
         private currentState: string;
         private uploader: any;
-
-        //更新进度条
-        private updateTotalProgress = () => {
-
-            var loaded = 0,
-                total = 0,
-                //spans = $progress.children(),
-                percent;
-            // $.each(percentages, function (k, v) {
-            //     total += v[0];
-            //     loaded += v[0] * v[1];
-            // });
-
-            // percent = total ? loaded / total : 0;
-
-            // spans.eq(0).text(Math.round(percent * 100) + '%');
-            // spans.eq(1).css('width', Math.round(percent * 100) + '%');
-            // updateStatus();
-        }
 
         private setState = (val: any) => {
             var file, stats;
@@ -34,43 +42,24 @@ namespace mcscontrols {
                 return;
             }
 
-            // $upload.removeClass('state-' + state);
-            // $upload.addClass('state-' + val);
             this.currentState = val;
 
             switch (this.currentState) {
                 case 'pedding':
-                    //$placeHolder.removeClass('element-invisible');
-                    //$queue.parent().removeClass('filled');
-                    //$queue.hide();
-                    //$statusBar.addClass('element-invisible');
                     this.uploader.refresh();
                     break;
 
                 case 'ready':
-                    // $placeHolder.addClass('element-invisible');
-                    // $('#filePicker2').removeClass('element-invisible');
-                    // $queue.parent().addClass('filled');
-                    // $queue.show();
-                    // $statusBar.removeClass('element-invisible');
                     this.uploader.refresh();
                     break;
 
                 case 'uploading':
-                    //$('#filePicker2').addClass('element-invisible');
-                    //$progress.show();
-                    //$upload.text('暂停上传');
                     break;
 
                 case 'paused':
-                    //$progress.show();
-                    //$upload.text('继续上传');
                     break;
 
                 case 'confirm':
-                    //$progress.hide();
-                    //$upload.text('开始上传').addClass('disabled');
-
                     stats = this.uploader.getStats();
                     if (stats.successNum && !stats.uploadFailNum) {
                         this.setState('finish');
@@ -86,14 +75,12 @@ namespace mcscontrols {
                     }
                     break;
             }
-
-            // updateStatus();
         }
 
         // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
         private addFile = (file: any) => {
 
-            var pfile: any = { id: file.id, name: file.name, loaded: false };
+            var pfile: any = { id: file.id, name: file.name, status: null };
 
             this.$scope.$apply(function (scope: any) {
 
@@ -129,8 +116,7 @@ namespace mcscontrols {
             let showCompleted = () => {
 
                 this.$scope.$apply(function (scope: any) {
-
-                    pfile.isCompleted = true;
+                    pfile.status = FileStatus.Uploaded;
                 });
             };
 
@@ -151,7 +137,6 @@ namespace mcscontrols {
         // 负责文件的销毁, 要区分已有的文件和新增的文件
         private removeFile = (file: any) => {
 
-            //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
             for (var i = 0; i < this.$scope.files.length; i++) {
 
                 var element = this.$scope.files[i];
@@ -163,8 +148,23 @@ namespace mcscontrols {
                 }
             }
 
-            if (!file.loaded) { //loaded： true 是从数据库加载，false 是客户端
+            if (!file.status || file.status == FileStatus.Uploaded) {
                 this.uploader.removeFile(file.id);
+            }
+
+            this.$scope.fileCount--;
+            if (!file.status) {
+                this.$scope.waitCount--;
+            }
+
+            //消除scope.data.value中的值
+            for (let index = 0; index < this.$scope.data.value.length; index++) {
+                const element = this.$scope.data.value[index];
+
+                if (element.id == file.id || element.clientID == file.id) {
+                    element.status = FileStatus.Deleted;
+                    break;
+                }
             }
         }
 
@@ -186,29 +186,12 @@ namespace mcscontrols {
 
         private initializeUploader = () => {
 
-            let $wrap: JQLite = this.$scope.container,
-                // 附件容器
-                $queue = $wrap.find('.filelist'),
-                // 状态栏，包括进度和控制按钮
-                $statusBar = $wrap.find('.statusBar'),
-                // 文件总体选择信息。
-                $info = $statusBar.find('.info'),
-                // 上传按钮
-                $upload = $wrap.find('.uploadBtn'),
-                // 没选择文件之前的内容。
-                $placeHolder = $wrap.find('.placeholder'),
-                // 总体进度条
-                $progress = $statusBar.find('.progress');
-
             var uploaderOptions = angular.extend(
                 {},
                 {
                     paste: document.body,
                     disableGlobalDnd: true,
-                    // chunked: true,
                     fileNumLimit: 300,
-                    // fileSizeLimit: 1024 * 1024 * 1024,
-                    // fileSingleSizeLimit: 100 * 1024 * 1024
                 },
                 this.$scope.data.options.webuploader,
                 {
@@ -241,58 +224,41 @@ namespace mcscontrols {
                     scope.fileSize += file.size;
                 });
 
-                if (this.$scope.fileCount === 1) {
-                    //$placeHolder.addClass('element-invisible');
-                    //$statusBar.show();
-                }
-
                 this.addFile(file);
                 this.setState('ready');
-                // updateTotalProgress();
             };
 
             this.uploader.onFileDequeued = (file: any) => {
 
-                this.$scope.fileCount--;
-                this.$scope.waitCount--;
-                this.$scope.fileSize -= file.size;
-                // if (!fileCount) {
-                //     setState('pedding');
-                // }
-
-                // removeFile(file);
-                // updateTotalProgress();
+                // this.$scope.fileCount--;
+                // this.$scope.waitCount--;
+                // this.$scope.fileSize -= file.size;
             };
 
-            this.uploader.on('uploadSuccess', (file: any, data: any) => {
+            this.uploader.onUploadSuccess = (file: any, data: any) => {
 
                 this.$scope.$apply(function (scope: any) {
                     scope.waitCount--;
+                    data[0].clientID = file.id;
                     scope.data.value.push(data[0]);
                 });
-            });
+            };
 
-            this.uploader.on('uploadProgress', (file: any, percentage: any) => {
-                // var $li = $('#' + file.id),
-                //     $percent = $li.find('.progress span');
-
-                // $percent.css('width', percentage * 100 + '%');
-                // percentages[file.id][1] = percentage;
-                // updateTotalProgress();
-
+            this.uploader.onUploadProgress = (file: any, percentage: number) => {
 
                 this.$scope.$apply(function (scope: any) {
 
                     if (percentage == 1) {
                         scope.progress = null;
                     } else {
+                        percentage = Number(percentage.toFixed(2));
                         scope.progress = percentage * 100 + '%';
                     }
                 });
-            });
+            };
 
-            this.uploader.on('all', (type: any) => {
-                var stats;
+            this.uploader.onAll = (type: any) => {
+
                 switch (type) {
                     case 'uploadFinished':
                         this.setState('confirm');
@@ -306,21 +272,24 @@ namespace mcscontrols {
                         this.setState('paused');
                         break;
                 }
-            });
+            };
 
             this.uploader.onError = (code: any) => {
                 this.toastrService.send('Eroor: ' + code, '出错了 :(', 3)
             };
+
+            this.uploader.onUploadBeforeSend = this.mcsUploader.getInterceptor();
         }
 
-        static $inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker', '$ocLazyLoad'];
+        static $inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker', '$ocLazyLoad', 'mcsUploader'];
 
         constructor(
             private $scope: any,
-            $timeout: ng.ITimeoutService,
+            private $timeout: ng.ITimeoutService,
             private toastrService: any,
             private configurationBroker: any,
-            $ocLazyLoad: any) {
+            private $ocLazyLoad: any,
+            private mcsUploader: $UploaderService) {
 
             this.currentState = 'pedding';
 
@@ -338,13 +307,27 @@ namespace mcscontrols {
                 submittedFunc(data);
             }
 
+            $scope.files = [];
 
-            $scope.fileCount = 0;
+            if ($scope.data && $scope.data.value) {
+
+                for (let index = 0; index < $scope.data.value.length; index++) {
+
+                    const element = $scope.data.value[index];
+
+                    if (element.status == FileStatus.Deleted) {
+                        continue;
+                    }
+
+                    var pfile: any = { id: element.id, name: element.originalName, status: element.status };
+                    $scope.files.push(pfile);
+                }
+            }
+
+            $scope.fileCount = $scope.files.length;
             $scope.waitCount = 0;// 添加的文件数量（未上传的，上传后会减掉）
             // 添加的文件总大小
             $scope.fileSize = 0;
-
-            $scope.files = [];
 
             $scope.removeFile = this.removeFile;
             $scope.upload = this.upload;
@@ -365,7 +348,8 @@ namespace mcscontrols {
         private defaultOptions = {
         };
 
-        constructor() {
+        constructor(
+        ) {
         }
 
         templateUrl = 'templates/mcs.input.file.html';
@@ -396,9 +380,40 @@ namespace mcscontrols {
                     $scope.bindingValue = data.value;
                 });
             }
+
+            $scope.remove = (item: any) => {
+                item.status = FileStatus.Deleted;
+            };
+        }];
+    }
+
+    class $UploaderService {
+
+        constructor(
+            private interceptor?: (object: any, data: any, headers: any) => void
+        ) {
+        }
+
+        public getInterceptor = () => {
+            return this.interceptor;
+        }
+    }
+
+    class $UploaderProvider implements ng.IServiceProvider {
+
+        public interceptor?: (object: any, data: any, headers: any) => void;
+
+        public static $inject: Array<string> = [];
+        constructor() {
+        }
+
+        $get = [() => {
+
+            return new $UploaderService(this.interceptor);
         }];
     }
 
     var inputTFile = angular.module('mcs.controls.input.file', ['oc.lazyLoad', 'mcs.controls.templates', 'mcs.controls.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
+    inputTFile.provider('mcsUploader', $UploaderProvider);
 }

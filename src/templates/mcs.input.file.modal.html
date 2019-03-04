@@ -11,7 +11,7 @@
                     <p class="title">{{file.name}}</p>
                     <p class="imgWrap"></p>
                     <p class="error" ng-if="file.isError">{{file.errorMessage}}</p>
-                    <p class="success" ng-if="file.isCompleted"></p>
+                    <p class="success" ng-if="file.status"></p>
                     <div class="file-panel">
                         <span class="cancel" ng-click="removeFile(file)">删除</span>
                     </div>
@@ -28,12 +28,13 @@
         <div class="btns">
             <div class="filePicker2 webuploader-container" ng-show="fileNumLimit > fileCount">
             </div>
-            <div class="uploadBtn state-pedding" ng-click="upload()">开始上传</div>
+            <div class="uploadBtn state-pedding" ng-if="waitCount > 0" ng-click="upload()">开始上传</div>
         </div>
     </div>
 </div>
 
 <div class="modal-footer">
     <button type="submit" class="btn btn-default" ng-click="closed()">取消</button>
-    <button type="submit" class="btn btn-default" ng-click="submitted(data)" ng-disabled="waitCount > 0">确定</button>
+    <button type="submit" class="btn btn-default" ng-click="submitted(data)" ng-disabled="waitCount > 0"
+        title="请先点击开始上传，完成后再确定！">确定</button>
 </div>

@@ -1,6 +1,171 @@
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var KEYS;
+    (function (KEYS) {
+        KEYS[KEYS["ESC"] = 27] = "ESC";
+        KEYS[KEYS["TAB"] = 9] = "TAB";
+        KEYS[KEYS["RETURN"] = 13] = "RETURN";
+        KEYS[KEYS["LEFT"] = 37] = "LEFT";
+        KEYS[KEYS["UP"] = 38] = "UP";
+        KEYS[KEYS["RIGHT"] = 39] = "RIGHT";
+        KEYS[KEYS["DOWN"] = 40] = "DOWN";
+    })(KEYS || (KEYS = {}));
+    ;
+    var $AutocompleteControlDirective = /** @class */ (function () {
+        function $AutocompleteControlDirective($q, $http) {
+            var _this = this;
+            this.$q = $q;
+            this.$http = $http;
+            this.templateUrl = 'templates/mcs.autocomplete.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                bindingOptions: '=?',
+                readonly: '=?mcsReadonly',
+                optionsName: '@?mcsAutocomplete',
+            };
+            this.controller = ['$scope', function ($scope) {
+                    if (!$scope.bindingValue || !angular.isArray($scope.bindingValue)) {
+                        $scope.bindingValue = [];
+                    }
+                    if (!$scope.bindingOptions || !angular.isArray($scope.bindingOptions)) {
+                        $scope.bindingOptions = [];
+                    }
+                    $scope.that = { suggestions: $scope.bindingOptions };
+                    $scope.options = $scope.optionsName ? $scope.$parent.$eval($scope.optionsName) : {};
+                    $scope.$cache = {};
+                    $scope.onKeyUp = function (e) {
+                        if ($scope.readonly) {
+                            return;
+                        }
+                        switch (e.which) {
+                            case KEYS.UP:
+                            case KEYS.DOWN:
+                            case KEYS.LEFT:
+                            case KEYS.RIGHT:
+                            case KEYS.ESC:
+                                return;
+                        }
+                        var currentValue = e.target.value;
+                        if ($scope.that && currentValue == $scope.that.currentValue) {
+                            return;
+                        }
+                        if ($scope.that) {
+                            clearTimeout($scope.that.onChangeTimeout);
+                        }
+                        $scope.that = { currentValue: currentValue, show: true };
+                        if ($scope.$cache[currentValue]) {
+                            $scope.that.suggestions = $scope.$cache[currentValue];
+                            return;
+                        }
+                        $scope.that.onChangeTimeout = setTimeout(function () {
+                            _this.onValueChange($scope.that, $scope);
+                        }, 1000);
+                    };
+                    $scope.onFocus = function () {
+                        if ($scope.that) {
+                            clearTimeout($scope.that.onFocusTimeout);
+                            $scope.that.onFocusTimeout = setTimeout(function () {
+                                $scope.that.show = true;
+                                $scope.$apply();
+                            }, 200);
+                        }
+                    };
+                    $scope.onBlur = function () {
+                        if ($scope.that) {
+                            clearTimeout($scope.that.onBlurTimeout);
+                            $scope.that.onBlurTimeout = setTimeout(function () {
+                                $scope.that.show = false;
+                                $scope.$apply();
+                            }, 200);
+                        }
+                    };
+                    $scope.selected = function (item) {
+                        $scope.bindingValue.push(item);
+                        $scope.tempNewValue = '';
+                        $scope.that = {};
+                        if ($scope.queryInputText) {
+                            $scope.queryInputText.focus();
+                            setTimeout(function () {
+                                _this.onValueChange($scope.that, $scope);
+                                $scope.$apply();
+                            }, 200);
+                        }
+                    };
+                    $scope.remove = function (item) {
+                        for (var index = 0; index < $scope.bindingValue.length; index++) {
+                            var element = $scope.bindingValue[index];
+                            if (element == item || element.id == item.id) {
+                                $scope.bindingValue.splice(index, 1);
+                                return;
+                            }
+                        }
+                    };
+                }];
+            this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+                scope.queryInputText = instanceElement.find(':text');
+            };
+        }
+        $AutocompleteControlDirective.factory = function () {
+            var directive = function (a, b) { return new $AutocompleteControlDirective(a, b); };
+            directive.$inject = ['$q', '$http'];
+            return directive;
+        };
+        $AutocompleteControlDirective.prototype.onValueChange = function (that, $scope) {
+            clearTimeout(that.onChangeTimeout);
+            that.loading = true;
+            if (that.currentValue && $scope.options && $scope.options.async && $scope.options.async.url) {
+                var params = $scope.options.async.params || {};
+                params = angular.extend(params, { searchTerm: that.currentValue });
+                this.$http.get($scope.options.async.url, { params: params, data: { $autoLoading: false } }).then(function (res) {
+                    that.loading = false;
+                    that.suggestions = res.data;
+                    $scope.$cache[that.currentValue] = res.data;
+                }, function () {
+                    that.loading = false;
+                });
+            }
+            else {
+                this.getSuggestionsLocal(that.currentValue, $scope.bindingOptions).then(function (data) {
+                    that.loading = false;
+                    that.suggestions = data;
+                    $scope.$cache[that.currentValue] = data;
+                }, function () {
+                    that.loading = false;
+                });
+            }
+        };
+        $AutocompleteControlDirective.prototype.getSuggestionsLocal = function (query, options) {
+            var defer = this.$q.defer();
+            var suggestions = [];
+            if (query) {
+                for (var index = 0; index < options.length; index++) {
+                    var element = options[index];
+                    if (angular.isString(element) && element.indexOf(query) >= 0) {
+                        suggestions.push(element);
+                    }
+                    else if (element.name && element.name.indexOf(query) >= 0) {
+                        suggestions.push(element);
+                    }
+                }
+            }
+            else {
+                suggestions = options || [];
+            }
+            defer.resolve(suggestions);
+            return defer.promise;
+        };
+        return $AutocompleteControlDirective;
+    }());
+    var inputAutocomplete = angular.module('mcs.controls.autocomplete', ['mcs.controls.templates']);
+    inputAutocomplete.directive('mcsAutocomplete', $AutocompleteControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
     var $CheckboxListControlDirective = /** @class */ (function () {
         function $CheckboxListControlDirective() {
             this.templateUrl = 'templates/mcs.checkbox.list.html';
@@ -99,6 +264,22 @@ var mcscontrols;
         ConfigurationBroker.prototype.getConfig = function () {
             return this.configuration;
         };
+        ConfigurationBroker.prototype.getResourceUri = function (relativeUrl, key) {
+            if (relativeUrl.indexOf('http') == 0) {
+                return relativeUrl;
+            }
+            if (!key || !this.getAppSetting('resourceUri') || !this.getAppSetting('resourceUri')[key]) {
+                return relativeUrl;
+            }
+            var baseUrl = this.getAppSetting('resourceUri')[key];
+            if (baseUrl.lastIndexOf('/') != 0) {
+                baseUrl = baseUrl + '/';
+            }
+            if (relativeUrl.indexOf('/') == 0) {
+                relativeUrl = relativeUrl.slice(1, relativeUrl.length);
+            }
+            return baseUrl + relativeUrl;
+        };
         ConfigurationBroker.prototype.getAppSetting = function (key) {
             return this.getConfig()[key];
         };
@@ -148,7 +329,9 @@ var mcscontrols;
         'mcs.controls.input.modal',
         'mcs.controls.input.file',
         'mcs.controls.configurationBroker',
-        'mcs.controls.loading'
+        'mcs.controls.loading',
+        'mcs.controls.input.ueditor',
+        'mcs.controls.autocomplete',
     ]);
 })(mcscontrols || (mcscontrols = {}));
 
@@ -196,7 +379,9 @@ var mcscontrols;
 var mcscontrols;
 (function (mcscontrols) {
     var $DateControlDirective = /** @class */ (function () {
-        function $DateControlDirective() {
+        function $DateControlDirective($ocLazyLoad) {
+            var _this = this;
+            this.$ocLazyLoad = $ocLazyLoad;
             this.templateUrl = 'templates/mcs.input.date.html';
             this.restrict = 'A';
             this.replace = true;
@@ -216,103 +401,90 @@ var mcscontrols;
                         language: 'zh-CN'
                     };
                     $scope.options = angular.extend({}, defaultOptions, $scope.bindingOptions);
+                    $scope.$watch('bindingValue', function (newValue, oldValue) {
+                        if ($scope.datetimepicker) {
+                            $scope.datetimepicker.datetimepicker('update', newValue);
+                        }
+                    });
                 }];
             this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
-                var datetimepicker;
-                scope.$watch('bindingValue', function (newValue, oldValue) {
-                    if (datetimepicker) {
-                        datetimepicker.datetimepicker('update', newValue);
-                    }
-                });
-                scope.$watch('readonly', function (newValue, oldValue) {
-                    if (newValue) {
-                        if (datetimepicker) {
-                            datetimepicker.datetimepicker('remove'); //TODO: 没生效
-                        }
-                    }
-                    else {
-                        datetimepicker = instanceElement.find('.form_datetime')
-                            .datetimepicker(scope.options)
-                            .on('changeDate', function (event) {
-                            scope.$apply(function () {
-                                scope.bindingValue = event.date;
-                            });
+                _this.$ocLazyLoad.load(['datetimepicker']).then(function () {
+                    scope.datetimepicker = instanceElement.find('.form_datetime')
+                        .datetimepicker(scope.options)
+                        .on('changeDate', function (event) {
+                        scope.$apply(function () {
+                            scope.bindingValue = event.date;
                         });
-                        datetimepicker.datetimepicker('update', scope.bindingValue);
-                    }
+                    });
+                    scope.datetimepicker.datetimepicker('update', scope.bindingValue);
                 });
             };
         }
         $DateControlDirective.factory = function () {
-            var directive = function () { return new $DateControlDirective(); };
-            //directive.$inject = [];
+            var directive = function (a) { return new $DateControlDirective(a); };
+            directive.$inject = ['$ocLazyLoad'];
             return directive;
         };
         return $DateControlDirective;
     }());
-    var inputDate = angular.module('mcs.controls.input.date', ['mcs.controls.templates']);
+    ;
+    var inputDate = angular.module('mcs.controls.input.date', ['oc.lazyLoad', 'mcs.controls.templates']);
     inputDate.directive('mcsInputDate', $DateControlDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var FileStatus;
+    (function (FileStatus) {
+        /// <summary>
+        /// 未修改
+        /// </summary>
+        FileStatus[FileStatus["Unmodified"] = 0] = "Unmodified";
+        /// <summary>
+        /// 新增加
+        /// </summary>
+        FileStatus[FileStatus["Inserted"] = 1] = "Inserted";
+        /// <summary>
+        /// 已修改
+        /// </summary>
+        FileStatus[FileStatus["Updated"] = 2] = "Updated";
+        /// <summary>
+        /// 已删除
+        /// </summary>
+        FileStatus[FileStatus["Deleted"] = 3] = "Deleted";
+        /// <summary>
+        /// 已上传（客户端）
+        /// </summary>
+        FileStatus[FileStatus["Uploaded"] = 99] = "Uploaded";
+    })(FileStatus || (FileStatus = {}));
     var FileController = /** @class */ (function () {
-        function FileController($scope, $timeout, toastrService, configurationBroker, $ocLazyLoad) {
+        function FileController($scope, $timeout, toastrService, configurationBroker, $ocLazyLoad, mcsUploader) {
             var _this = this;
             this.$scope = $scope;
+            this.$timeout = $timeout;
             this.toastrService = toastrService;
             this.configurationBroker = configurationBroker;
-            //更新进度条
-            this.updateTotalProgress = function () {
-                var loaded = 0, total = 0, 
-                //spans = $progress.children(),
-                percent;
-                // $.each(percentages, function (k, v) {
-                //     total += v[0];
-                //     loaded += v[0] * v[1];
-                // });
-                // percent = total ? loaded / total : 0;
-                // spans.eq(0).text(Math.round(percent * 100) + '%');
-                // spans.eq(1).css('width', Math.round(percent * 100) + '%');
-                // updateStatus();
-            };
+            this.$ocLazyLoad = $ocLazyLoad;
+            this.mcsUploader = mcsUploader;
             this.setState = function (val) {
                 var file, stats;
                 if (val === _this.currentState) {
                     return;
                 }
-                // $upload.removeClass('state-' + state);
-                // $upload.addClass('state-' + val);
                 _this.currentState = val;
                 switch (_this.currentState) {
                     case 'pedding':
-                        //$placeHolder.removeClass('element-invisible');
-                        //$queue.parent().removeClass('filled');
-                        //$queue.hide();
-                        //$statusBar.addClass('element-invisible');
                         _this.uploader.refresh();
                         break;
                     case 'ready':
-                        // $placeHolder.addClass('element-invisible');
-                        // $('#filePicker2').removeClass('element-invisible');
-                        // $queue.parent().addClass('filled');
-                        // $queue.show();
-                        // $statusBar.removeClass('element-invisible');
                         _this.uploader.refresh();
                         break;
                     case 'uploading':
-                        //$('#filePicker2').addClass('element-invisible');
-                        //$progress.show();
-                        //$upload.text('暂停上传');
                         break;
                     case 'paused':
-                        //$progress.show();
-                        //$upload.text('继续上传');
                         break;
                     case 'confirm':
-                        //$progress.hide();
-                        //$upload.text('开始上传').addClass('disabled');
                         stats = _this.uploader.getStats();
                         if (stats.successNum && !stats.uploadFailNum) {
                             _this.setState('finish');
@@ -329,11 +501,10 @@ var mcscontrols;
                         }
                         break;
                 }
-                // updateStatus();
             };
             // 当有文件添加进来时执行，负责view的创建, 要区分已有的文件和新增的文件
             this.addFile = function (file) {
-                var pfile = { id: file.id, name: file.name, loaded: false };
+                var pfile = { id: file.id, name: file.name, status: null };
                 _this.$scope.$apply(function (scope) {
                     //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
                     scope.files.push(pfile);
@@ -358,7 +529,7 @@ var mcscontrols;
                 };
                 var showCompleted = function () {
                     _this.$scope.$apply(function (scope) {
-                        pfile.isCompleted = true;
+                        pfile.status = FileStatus.Uploaded;
                     });
                 };
                 file.on('statuschange', function (cur, prev) {
@@ -377,7 +548,6 @@ var mcscontrols;
             };
             // 负责文件的销毁, 要区分已有的文件和新增的文件
             this.removeFile = function (file) {
-                //需要捏造一个新对象，不能直接用uploader的file，因为从服务器下来的附件无法还原成file
                 for (var i = 0; i < _this.$scope.files.length; i++) {
                     var element = _this.$scope.files[i];
                     if (element.id == file.id) {
@@ -385,8 +555,20 @@ var mcscontrols;
                         break;
                     }
                 }
-                if (!file.loaded) { //loaded： true 是从数据库加载，false 是客户端
+                if (!file.status || file.status == FileStatus.Uploaded) {
                     _this.uploader.removeFile(file.id);
+                }
+                _this.$scope.fileCount--;
+                if (!file.status) {
+                    _this.$scope.waitCount--;
+                }
+                //消除scope.data.value中的值
+                for (var index = 0; index < _this.$scope.data.value.length; index++) {
+                    var element_1 = _this.$scope.data.value[index];
+                    if (element_1.id == file.id || element_1.clientID == file.id) {
+                        element_1.status = FileStatus.Deleted;
+                        break;
+                    }
                 }
             };
             this.upload = function () {
@@ -403,23 +585,9 @@ var mcscontrols;
                 }
             };
             this.initializeUploader = function () {
-                var $wrap = _this.$scope.container, 
-                // 附件容器
-                $queue = $wrap.find('.filelist'), 
-                // 状态栏，包括进度和控制按钮
-                $statusBar = $wrap.find('.statusBar'), 
-                // 文件总体选择信息。
-                $info = $statusBar.find('.info'), 
-                // 上传按钮
-                $upload = $wrap.find('.uploadBtn'), 
-                // 没选择文件之前的内容。
-                $placeHolder = $wrap.find('.placeholder'), 
-                // 总体进度条
-                $progress = $statusBar.find('.progress');
                 var uploaderOptions = angular.extend({}, {
                     paste: document.body,
                     disableGlobalDnd: true,
-                    // chunked: true,
                     fileNumLimit: 300,
                 }, _this.$scope.data.options.webuploader, {
                     server: _this.$scope.data.options.uploadUrl,
@@ -443,47 +611,33 @@ var mcscontrols;
                         scope.waitCount++;
                         scope.fileSize += file.size;
                     });
-                    if (_this.$scope.fileCount === 1) {
-                        //$placeHolder.addClass('element-invisible');
-                        //$statusBar.show();
-                    }
                     _this.addFile(file);
                     _this.setState('ready');
-                    // updateTotalProgress();
                 };
                 _this.uploader.onFileDequeued = function (file) {
-                    _this.$scope.fileCount--;
-                    _this.$scope.waitCount--;
-                    _this.$scope.fileSize -= file.size;
-                    // if (!fileCount) {
-                    //     setState('pedding');
-                    // }
-                    // removeFile(file);
-                    // updateTotalProgress();
+                    // this.$scope.fileCount--;
+                    // this.$scope.waitCount--;
+                    // this.$scope.fileSize -= file.size;
                 };
-                _this.uploader.on('uploadSuccess', function (file, data) {
+                _this.uploader.onUploadSuccess = function (file, data) {
                     _this.$scope.$apply(function (scope) {
                         scope.waitCount--;
+                        data[0].clientID = file.id;
                         scope.data.value.push(data[0]);
                     });
-                });
-                _this.uploader.on('uploadProgress', function (file, percentage) {
-                    // var $li = $('#' + file.id),
-                    //     $percent = $li.find('.progress span');
-                    // $percent.css('width', percentage * 100 + '%');
-                    // percentages[file.id][1] = percentage;
-                    // updateTotalProgress();
+                };
+                _this.uploader.onUploadProgress = function (file, percentage) {
                     _this.$scope.$apply(function (scope) {
                         if (percentage == 1) {
                             scope.progress = null;
                         }
                         else {
+                            percentage = Number(percentage.toFixed(2));
                             scope.progress = percentage * 100 + '%';
                         }
                     });
-                });
-                _this.uploader.on('all', function (type) {
-                    var stats;
+                };
+                _this.uploader.onAll = function (type) {
                     switch (type) {
                         case 'uploadFinished':
                             _this.setState('confirm');
@@ -495,10 +649,11 @@ var mcscontrols;
                             _this.setState('paused');
                             break;
                     }
-                });
+                };
                 _this.uploader.onError = function (code) {
                     _this.toastrService.send('Eroor: ' + code, '出错了 :(', 3);
                 };
+                _this.uploader.onUploadBeforeSend = _this.mcsUploader.getInterceptor();
             };
             this.currentState = 'pedding';
             var closedFunc = $scope.closed;
@@ -513,16 +668,26 @@ var mcscontrols;
                     _this.uploader.destroy();
                 submittedFunc(data);
             };
-            $scope.fileCount = 0;
+            $scope.files = [];
+            if ($scope.data && $scope.data.value) {
+                for (var index = 0; index < $scope.data.value.length; index++) {
+                    var element = $scope.data.value[index];
+                    if (element.status == FileStatus.Deleted) {
+                        continue;
+                    }
+                    var pfile = { id: element.id, name: element.originalName, status: element.status };
+                    $scope.files.push(pfile);
+                }
+            }
+            $scope.fileCount = $scope.files.length;
             $scope.waitCount = 0; // 添加的文件数量（未上传的，上传后会减掉）
             // 添加的文件总大小
             $scope.fileSize = 0;
-            $scope.files = [];
             $scope.removeFile = this.removeFile;
             $scope.upload = this.upload;
             $ocLazyLoad.load(['webuploader-load']).then(function () { return _this.initializeUploader(); });
         }
-        FileController.$inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker', '$ocLazyLoad'];
+        FileController.$inject = ['$scope', '$timeout', 'toastrService', 'configurationBroker', '$ocLazyLoad', 'mcsUploader'];
         return FileController;
     }());
     var $FileControlDirective = /** @class */ (function () {
@@ -552,6 +717,9 @@ var mcscontrols;
                             $scope.bindingValue = data.value;
                         });
                     };
+                    $scope.remove = function (item) {
+                        item.status = FileStatus.Deleted;
+                    };
                 }];
         }
         $FileControlDirective.factory = function () {
@@ -561,8 +729,29 @@ var mcscontrols;
         };
         return $FileControlDirective;
     }());
+    var $UploaderService = /** @class */ (function () {
+        function $UploaderService(interceptor) {
+            var _this = this;
+            this.interceptor = interceptor;
+            this.getInterceptor = function () {
+                return _this.interceptor;
+            };
+        }
+        return $UploaderService;
+    }());
+    var $UploaderProvider = /** @class */ (function () {
+        function $UploaderProvider() {
+            var _this = this;
+            this.$get = [function () {
+                    return new $UploaderService(_this.interceptor);
+                }];
+        }
+        $UploaderProvider.$inject = [];
+        return $UploaderProvider;
+    }());
     var inputTFile = angular.module('mcs.controls.input.file', ['oc.lazyLoad', 'mcs.controls.templates', 'mcs.controls.configurationBroker']);
     inputTFile.directive('mcsInputFile', $FileControlDirective.factory());
+    inputTFile.provider('mcsUploader', $UploaderProvider);
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";
@@ -844,6 +1033,82 @@ var mcscontrols;
 "use strict";
 var mcscontrols;
 (function (mcscontrols) {
+    var $TextControlDirective = /** @class */ (function () {
+        function $TextControlDirective($ocLazyLoad) {
+            var _this = this;
+            this.$ocLazyLoad = $ocLazyLoad;
+            this.templateUrl = 'templates/mcs.input.ueditor.html';
+            this.restrict = 'A';
+            this.replace = true;
+            this.scope = {
+                bindingValue: '=',
+                readonly: '=?mcsReadonly'
+            };
+            this.controller = ['$scope', '$sce', function ($scope, $sce) {
+                    $scope.$watch('readonly', function (newValue, oldValue) {
+                        if (!$scope.ueditor)
+                            return;
+                        if (newValue) {
+                            $scope.ueditor.setHide();
+                        }
+                        else {
+                            $scope.ueditor.setShow();
+                        }
+                    });
+                    $scope.$watch('bindingValue', function (newValue, oldValue) {
+                        $scope.bindingHtml = $sce.trustAsHtml(newValue);
+                        if ($scope.ueditor && !$scope.$innerUpdateValue) {
+                            $scope.ueditor.setContent($scope.bindingValue);
+                        }
+                        $scope.$innerUpdateValue = false;
+                    });
+                }];
+            this.link = function (scope, instanceElement, instanceAttributes, controller, transclude) {
+                _this.$ocLazyLoad.load(['ueditor']).then(function () {
+                    var container = instanceElement.find('.container');
+                    var id = 'umeditor-' +
+                        Math.floor(Math.random() * 100).toString() +
+                        new Date().getTime().toString();
+                    container.attr('id', id);
+                    var ueditor = UM.getEditor(id); // 也可以不生成ID，使用 render(Element containerDom)
+                    ueditor.ready(function () {
+                        scope.ueditor = ueditor;
+                        ueditor.setContent(scope.bindingValue);
+                        scope.$innerUpdateValue = false;
+                        if (scope.readonly) {
+                            scope.ueditor.setHide();
+                        }
+                        else {
+                            scope.ueditor.setShow();
+                        }
+                    });
+                    var updateValue = function () {
+                        var content = ueditor.getContent();
+                        if (scope.bindingValue != content) {
+                            scope.bindingValue = content;
+                            scope.$innerUpdateValue = true;
+                            scope.$apply();
+                        }
+                    };
+                    ueditor.addListener('contentChange', updateValue);
+                    ueditor.addListener('blur', updateValue);
+                });
+            };
+        }
+        $TextControlDirective.factory = function () {
+            var directive = function (a) { return new $TextControlDirective(a); };
+            directive.$inject = ['$ocLazyLoad'];
+            return directive;
+        };
+        return $TextControlDirective;
+    }());
+    var inputUeditor = angular.module('mcs.controls.input.ueditor', ['oc.lazyLoad', 'mcs.controls.templates']);
+    inputUeditor.directive('mcsInputUeditor', $TextControlDirective.factory());
+})(mcscontrols || (mcscontrols = {}));
+
+"use strict";
+var mcscontrols;
+(function (mcscontrols) {
     var $LoadingService = /** @class */ (function () {
         function $LoadingService($rootScope, $templateCache) {
             this.$rootScope = $rootScope;
@@ -857,10 +1122,6 @@ var mcscontrols;
             this.template.addClass('hidden');
         };
         $LoadingService.prototype.start = function () {
-            //一个诡异的问题，也没那么诡异，template的初始化在run中，时序比较晚一些，所以只好再重新来一次
-            if (this.template && !this.template[0]) {
-                this.initLoading();
-            }
             this.count++;
             if (this.template) {
                 this.template.removeClass('hidden');
@@ -877,31 +1138,43 @@ var mcscontrols;
     }());
     var loadingService = angular.module('mcs.controls.loading', ['mcs.controls.templates']);
     loadingService.service('loadingService', $LoadingService);
+    loadingService.run(['loadingService', '$rootScope', function (loadingService, $rootScope) {
+            $rootScope.$on('HTTP_REQUEST_START', function (event) {
+                loadingService.start();
+            });
+            $rootScope.$on('HTTP_REQUEST_STOP', function (event) {
+                loadingService.stop();
+            });
+        }]);
     var httpLoadingInterceptor = /** @class */ (function () {
-        function httpLoadingInterceptor($q, loadingService) {
+        function httpLoadingInterceptor($q, $rootScope) {
             var _this = this;
             this.$q = $q;
-            this.loadingService = loadingService;
+            this.$rootScope = $rootScope;
             this.request = function (config) {
-                _this.loadingService.start();
+                if (config && config.data && config.data.$autoLoading) {
+                    _this.$rootScope.$broadcast('HTTP_REQUEST_START');
+                }
                 return config;
             };
             this.requestError = function (err) {
-                _this.loadingService.stop();
+                _this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
                 return _this.$q.reject(err);
             };
             this.response = function (res) {
-                _this.loadingService.stop();
+                if (res.config && res.config.data && res.config.data.$autoLoading) {
+                    _this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
+                }
                 return res;
             };
             this.responseError = function (err) {
-                _this.loadingService.stop();
+                _this.$rootScope.$broadcast('HTTP_REQUEST_STOP');
                 return _this.$q.reject(err);
             };
         }
         httpLoadingInterceptor.factory = function () {
             var directive = function (a, b) { return new httpLoadingInterceptor(a, b); };
-            directive.$inject = ['$q', 'loadingService'];
+            directive.$inject = ['$q', '$rootScope'];
             return directive;
         };
         return httpLoadingInterceptor;
@@ -1198,15 +1471,16 @@ var mcscontrols;
 var mcscontrols;
 (function (mcscontrols) {
     var $TablePaginationController = /** @class */ (function () {
-        function $TablePaginationController($scope, $q, $http, toastrService) {
+        function $TablePaginationController($scope, $q, $http, configurationBroker) {
             var _this = this;
             this.$scope = $scope;
             this.$q = $q;
             this.$http = $http;
-            this.toastrService = toastrService;
+            this.configurationBroker = configurationBroker;
             this.currentOptions = $scope.$parent.$eval($scope.optionsName);
             if (!this.currentOptions)
                 throw 'Must have options';
+            $scope.selectedAll = false;
             this.currentPagination = {
                 pageIndex: 1,
                 pageSize: this.currentOptions.pageSize || 20,
@@ -1214,13 +1488,53 @@ var mcscontrols;
                 top: -1
             };
             $scope.selected = function (item) {
-                $scope.bindingValue = item;
+                item.$selected = !item.$selected;
+                if (item.$selected) {
+                    $scope.bindingValue.push({ id: item.id, name: item.name, data: item });
+                }
+                else {
+                    for (var i = 0; i < $scope.bindingValue.length; i++) {
+                        var element = $scope.bindingValue[i];
+                        if (item.id == element.id) {
+                            $scope.bindingValue.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                $scope.updateSelectedAll();
+            };
+            $scope.updateSelectedAll = function () {
+                var result = $scope.data.length > 0;
+                for (var i = 0; i < $scope.data.length; i++) {
+                    var element = $scope.data[i];
+                    if (!element.$selected) {
+                        result = false;
+                        break;
+                    }
+                }
+                $scope.selectedAll = result;
+            };
+            $scope.allSelected = function () {
+                var currentState = $scope.selectedAll;
+                for (var i = 0; i < $scope.data.length; i++) {
+                    var item = $scope.data[i];
+                    if (currentState == Boolean(item.$selected)) {
+                        $scope.selected(item);
+                    }
+                }
             };
             $scope.changePaginate = function (pagination) {
                 if (!pagination || pagination.pageIndex == _this.currentPagination.pageIndex)
                     return;
                 _this.refresh(pagination);
             };
+            $scope.$watch('bindingValue', function (newValue, oldValue, scope) {
+                scope.bindingValue = scope.bindingValue || [];
+                if (scope.bindingValue.constructor != Array) {
+                    scope.bindingValue = [];
+                }
+                _this.refreshSelected(scope);
+            });
             this.loadPaginationData(this.currentPagination, this.currentOptions).then(function (data) {
                 _this.initializeScope(data, $scope);
             });
@@ -1254,9 +1568,29 @@ var mcscontrols;
         $TablePaginationController.prototype.initializeScope = function (source, $scope) {
             this.calculateCurrentPaginate($scope, source);
             $scope.data = source.pagedData;
+            this.refreshSelected($scope);
+        };
+        $TablePaginationController.prototype.refreshSelected = function ($scope) {
+            if (!$scope.data)
+                return;
+            for (var i = 0; i < $scope.data.length; i++) {
+                var item = $scope.data[i];
+                if (!$scope.bindingValue) {
+                    item.$selected = false;
+                }
+                else {
+                    for (var j = 0; j < $scope.bindingValue.length; j++) {
+                        var element = $scope.bindingValue[j];
+                        if (item.id == element.id) {
+                            item.$selected = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            $scope.updateSelectedAll();
         };
         $TablePaginationController.prototype.loadPaginationData = function (pagination, options) {
-            var _this = this;
             var defer = this.$q.defer();
             var pagedQueryCriteria = { pageParams: pagination };
             if (options.async && options.async.params) {
@@ -1277,10 +1611,9 @@ var mcscontrols;
                 }
             }
             else if (options.async && options.async.url) {
-                this.$http.post(options.async.url, pagedQueryCriteria).then(function (res) {
+                var url = this.configurationBroker.getResourceUri(options.async.url, options.async.resourceUri);
+                this.$http.post(url, pagedQueryCriteria).then(function (res) {
                     defer.resolve(res.data);
-                }, function (res) {
-                    _this.toastrService.send('HTTP获取失败', '出错了 :(', 3);
                 });
             }
             return defer.promise;
@@ -1362,7 +1695,7 @@ var mcscontrols;
                 scope.paginates.push(item);
             }
         };
-        $TablePaginationController.$inject = ['$scope', '$q', '$http', 'toastrService'];
+        $TablePaginationController.$inject = ['$scope', '$q', '$http', 'configurationBroker'];
         return $TablePaginationController;
     }());
     var $TablePaginationDirective = /** @class */ (function () {
@@ -1373,7 +1706,7 @@ var mcscontrols;
             this.restrict = 'A';
             this.replace = true;
             this.scope = {
-                bindingValue: '=',
+                bindingValue: '=?',
                 optionsName: '@mcsTablePagination',
                 readonly: '=?mcsReadonly'
             };
@@ -1388,7 +1721,7 @@ var mcscontrols;
             };
         }
         $TablePaginationDirective.factory = function () {
-            var directive = function (a, b) { return new $TablePaginationDirective(a, b); };
+            var directive = function (a, b, c) { return new $TablePaginationDirective(a, b); };
             directive.$inject = ['$templateCache', '$compile'];
             return directive;
         };
@@ -1423,16 +1756,24 @@ var mcscontrols;
             var tBodyCheckbox = this.renderCheckbox(tableInfo.tBody);
             var tfootCheckbox = this.renderCheckbox(tableInfo.tfoot);
             this.bindingItemCheckbox(tBodyCheckbox);
+            this.bindingAllCheckbox(theadCheckbox);
         };
         $TablePaginationDirective.prototype.bindingItemCheckbox = function (checkbox) {
             if (!checkbox)
                 return;
             checkbox.attr('ng-click', 'selected(item, $event)');
+            checkbox.attr('ng-checked', 'item.$selected');
+        };
+        $TablePaginationDirective.prototype.bindingAllCheckbox = function (checkbox) {
+            if (!checkbox)
+                return;
+            checkbox.attr('ng-click', 'allSelected()');
+            checkbox.attr('ng-checked', 'selectedAll');
         };
         $TablePaginationDirective.prototype.renderCheckbox = function (element) {
             var tr = element.find('tr');
             if (tr.length > 0) {
-                var td = angular.element('<th></th>');
+                var td = angular.element('<th ng-hide="readonly"></th>');
                 var checkbox = angular.element('<input type="checkbox" ng-disabled="readonly" />');
                 td.append(checkbox);
                 td.attr('rowspan', tr.length);
@@ -1459,7 +1800,7 @@ var mcscontrols;
         };
         return $TablePaginationDirective;
     }());
-    var tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates']);
+    var tablePagination = angular.module('mcs.controls.table.pagination', ['mcs.controls.templates', 'mcs.controls.configurationBroker']);
     tablePagination.directive('mcsTablePagination', $TablePaginationDirective.factory());
 })(mcscontrols || (mcscontrols = {}));
 
@@ -1556,6 +1897,52 @@ var mcscontrols;
     }());
     var toastr = angular.module('mcs.controls.toastr', ['mcs.controls.templates']);
     toastr.service('toastrService', $ToastrService);
+    toastr.run(['toastrService', '$rootScope', function (toastrService, $rootScope) {
+            $rootScope.$on('HTTP_REQUEST_ERROR', function (event, err) {
+                if (err && err.status) {
+                    if (401 <= err.status && err.status < 402) {
+                        toastrService.send(err.statusText || '权限不足', '出错了 :)', 3);
+                    }
+                    else if (500 <= err.status) {
+                        var message = err.statusText || 'HTTP请求失败';
+                        if (err.data && err.data.description) {
+                            message = err.data.description;
+                        }
+                        toastrService.send(message, '出错了 :)', 3);
+                    }
+                    else {
+                        toastrService.send('HTTP请求失败', '出错了 :)', 2);
+                    }
+                }
+                else {
+                    toastrService.send('HTTP请求失败', '出错了 :)', 2);
+                }
+            });
+        }]);
+    var httpErrorInterceptor = /** @class */ (function () {
+        function httpErrorInterceptor($q, $rootScope) {
+            var _this = this;
+            this.$q = $q;
+            this.$rootScope = $rootScope;
+            this.requestError = function (err) {
+                _this.$rootScope.$broadcast('HTTP_REQUEST_ERROR', err);
+                return _this.$q.reject(err);
+            };
+            this.responseError = function (err) {
+                _this.$rootScope.$broadcast('HTTP_REQUEST_ERROR', err);
+                return _this.$q.reject(err);
+            };
+        }
+        httpErrorInterceptor.factory = function () {
+            var directive = function (a, b) { return new httpErrorInterceptor(a, b); };
+            directive.$inject = ['$q', '$rootScope'];
+            return directive;
+        };
+        return httpErrorInterceptor;
+    }());
+    toastr.config(['$httpProvider', function ($httpProvider) {
+            $httpProvider.interceptors.push(httpErrorInterceptor.factory());
+        }]);
 })(mcscontrols || (mcscontrols = {}));
 
 "use strict";

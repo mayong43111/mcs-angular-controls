@@ -10,7 +10,6 @@
 
     <!-- Bootstrap -->
     <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../dist/mcs.controls.css" rel="stylesheet">
 
     <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
     <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
@@ -23,7 +22,7 @@
 <body>
     <div class="container">
         <div class="page-header">
-            <h1>MCS Angular Controls <small>input file</small></h1>
+            <h1>MCS Angular Controls <small>input ueditor</small></h1>
         </div>
     </div>
 
@@ -32,7 +31,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">Normal <input mcs-input-checkbox binding-value="normal_readonly" /> 是否只读</div>
             <div class="panel-body">
-                <p><input mcs-input-file mcs-readonly="normal_readonly" binding-value="normal_val" /></p>
+                <p><input mcs-input-ueditor mcs-readonly="normal_readonly" binding-value="normal_val" /></p>
                 <p>Result: {{normal_val}}</p>
             </div>
         </div>
@@ -40,7 +39,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">Readonly</div>
             <div class="panel-body">
-                <p><input mcs-input-file mcs-readonly="true" binding-value="normal_val" /></p>
+                <p><input mcs-input-ueditor binding-value="normal_val2" /></p>
             </div>
         </div>
     </div>
@@ -56,26 +55,23 @@
 
             var app = angular.module('app', ['mcs.controls']);
 
-            app.config(['configurationBrokerProvider', function (configurationBroker) {
-
-                configurationBroker.initialize({
-                    'uploader.swfUrl': '/plugins/webuploader/Uploader.swf'
-                });
-            }]);
-
             app.config(['$ocLazyLoadProvider', function ($ocLazyLoadProvider) {
                 $ocLazyLoadProvider.config({
                     modules: [{
-                        name: 'webuploader-load',
+                        name: 'ueditor',
                         files: [
-                            '../plugins/webuploader/webuploader.js',
-                            '../plugins/webuploader/webuploader.css'
+                            '../plugins/umeditor/themes/default/css/umeditor.css',
+                            '../plugins/umeditor/umeditor.config.js',
+                            '../plugins/umeditor/umeditor.js',
                         ]
                     }]
                 });
             }]);
 
             app.controller('ExampleController', ['$scope', function ($scope) {
+
+                $scope.normal_val = '<p>asddsa</p>';
+                $scope.normal_val2 = '<p>asddsa</p>';
             }]);
 
             angular.element(document).find('body').attr('ng-controller', 'ExampleController');
